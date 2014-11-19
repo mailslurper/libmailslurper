@@ -8,8 +8,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/adampresley/mailslurper/libmailslurper/datetime"
-	"github.com/adampresley/mailslurper/libmailslurper/model/header"
+	"github.com/mailslurper/libmailslurper/datetime"
+	"github.com/mailslurper/libmailslurper/model/header"
 )
 
 type MailHeader struct {

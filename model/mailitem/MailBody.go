@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/adampresley/mailslurper/libmailslurper/model/attachment"
+	"github.com/mailslurper/libmailslurper/model/attachment"
 )
 
 type MailBody struct {

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adampresley/mailslurper/libmailslurper/smtpconstants"
+	"github.com/mailslurper/libmailslurper/smtpconstants"
 )
 
 type SmtpReader struct{

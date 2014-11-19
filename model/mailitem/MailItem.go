@@ -5,7 +5,7 @@
 package mailitem
 
 import (
-	"github.com/adampresley/mailslurper/libmailslurper/model/attachment"
+	"github.com/mailslurper/libmailslurper/model/attachment"
 )
 
 /*

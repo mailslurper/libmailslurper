@@ -8,8 +8,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/adampresley/mailslurper/libmailslurper/model/mailitem"
-	"github.com/adampresley/mailslurper/libmailslurper/receiver"
+	"github.com/mailslurper/libmailslurper/model/mailitem"
+	"github.com/mailslurper/libmailslurper/receiver"
 )
 
 /*

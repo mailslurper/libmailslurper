@@ -5,7 +5,7 @@
 package receiver
 
 import(
-	"github.com/adampresley/mailslurper/libmailslurper/model/mailitem"
+	"github.com/mailslurper/libmailslurper/model/mailitem"
 )
 
 type IMailItemReceiver interface{

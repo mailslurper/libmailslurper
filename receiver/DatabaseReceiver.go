@@ -7,8 +7,8 @@ package receiver
 import(
 	"log"
 
-	"github.com/adampresley/mailslurper/libmailslurper/model/mailitem"
-	"github.com/adampresley/mailslurper/libmailslurper/storage"
+	"github.com/mailslurper/libmailslurper/model/mailitem"
+	"github.com/mailslurper/libmailslurper/storage"
 )
 
 type DatabaseReceiver struct{}

@@ -8,7 +8,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/adampresley/mailslurper/libmailslurper/smtpconstants"
+	"github.com/mailslurper/libmailslurper/smtpconstants"
 )
 
 type SmtpWriter struct{

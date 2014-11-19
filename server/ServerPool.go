@@ -9,9 +9,9 @@ import(
 	"log"
 	"net"
 
-	"github.com/adampresley/mailslurper/libmailslurper/model/mailitem"
-	"github.com/adampresley/mailslurper/libmailslurper/smtpconstants"
-	"github.com/adampresley/mailslurper/libmailslurper/smtpio"
+	"github.com/mailslurper/libmailslurper/model/mailitem"
+	"github.com/mailslurper/libmailslurper/smtpconstants"
+	"github.com/mailslurper/libmailslurper/smtpio"
 )
 
 /*

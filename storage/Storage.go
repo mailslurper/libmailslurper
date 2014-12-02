@@ -13,8 +13,6 @@ import (
 	"github.com/adampresley/golangdb"
 	"github.com/mailslurper/libmailslurper/model/attachment"
 	"github.com/mailslurper/libmailslurper/model/mailitem"
-
-	"github.com/nu7hatch/gouuid"
 )
 
 /*
@@ -41,14 +39,6 @@ Disconnects from the database storage
 */
 func DisconnectFromStorage() {
 	golangdb.Db["lib"].Close()
-}
-
-/*
-Generate a UUID ID for database records.
-*/
-func GenerateId() string {
-	id, _ := uuid.NewV4()
-	return id.String()
 }
 
 /*
@@ -181,6 +171,7 @@ func GetMail(id string) (mailitem.MailItem, error) {
 
 		newAttachment := &attachment.Attachment{
 			Id: attachmentId,
+			MailId: mailItemId,
 			Headers: &attachment.AttachmentHeader{
 				FileName: fileName,
 				ContentType: contentType,
@@ -267,6 +258,7 @@ func GetMailCollection(offset, length int) ([]mailitem.MailItem, error) {
 
 			newAttachment := &attachment.Attachment{
 				Id: attachmentId,
+				MailId: mailItemId,
 				Headers: &attachment.AttachmentHeader{FileName: fileName},
 			}
 
@@ -298,7 +290,10 @@ func GetMailCollection(offset, length int) ([]mailitem.MailItem, error) {
 
 func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*attachment.Attachment) error {
 	for _, a := range attachments {
-		attachmentId := GenerateId()
+		attachmentId, err := mailitem.GenerateId()
+		if err != nil {
+			return fmt.Errorf("Error generating ID for attachment: %s", err)
+		}
 
 		statement, err := transaction.Prepare(`
 			INSERT INTO attachment (
@@ -379,10 +374,8 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 			return "", fmt.Errorf("Error preparing insert statement for mail item in StoreMail: %s", err)
 		}
 
-		mailItemId := GenerateId()
-
 		_, err = statement.Exec(
-			mailItemId,
+			mailItem.Id,
 			mailItem.DateSent,
 			mailItem.FromAddress,
 			strings.Join(mailItem.ToAddresses, "; "),
@@ -399,12 +392,11 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 		}
 
 		statement.Close()
-		mailItem.Id = mailItemId
 
 		/*
 		 * Insert attachments
 		 */
-		if err = storeAttachments(mailItemId, transaction, mailItem.Attachments); err != nil {
+		if err = storeAttachments(mailItem.Id, transaction, mailItem.Attachments); err != nil {
 			transaction.Rollback()
 			return "", fmt.Errorf("Unable to insert attachments in StoreMail: %s", err)
 		}
@@ -412,5 +404,5 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 		transaction.Commit()
 		log.Printf("New mail item written to database.\n\n")
 
-		return mailItemId, nil
+		return mailItem.Id, nil
 }

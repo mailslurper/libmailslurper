@@ -95,6 +95,14 @@ be written to the receiver channel.
 func (this *SmtpWorker) InitializeMailItem() {
 	this.Mail.ToAddresses = make([]string, 0)
 	this.Mail.Attachments = make([]*attachment.Attachment, 0)
+
+	/*
+	 * IDs are generated ahead of time because
+	 * we do not know what order recievers
+	 * get the mail item once it is retrieved from the TCP socket.
+	 */
+	id, _ := mailitem.GenerateId()
+	this.Mail.Id = id
 }
 
 /*

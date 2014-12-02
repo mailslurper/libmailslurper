@@ -6,6 +6,7 @@ package attachment
 
 type Attachment struct {
 	Id       string            `json:"id"`
+	MailId   string            `json:"mailId"`
 	Headers  *AttachmentHeader `json:"headers"`
 	Contents string            `json:"contents"`
 }

@@ -21,6 +21,8 @@ Creates a global connection handle in a map named "lib".
 func ConnectToStorage(connectionInfo *golangdb.DatabaseConnection) error {
 	var err error
 
+	log.Println("Connecting to database", connectionInfo.Database)
+
 	err = connectionInfo.Connect("lib")
 	if err != nil {
 		return err
@@ -72,7 +74,7 @@ func GetAttachment(mailId, attachmentId string) (attachment.Attachment, error) {
 	rows.Scan(&fileName, &contentType, &content)
 
 	result.Headers = &attachment.AttachmentHeader{
-		FileName: fileName,
+		FileName:    fileName,
 		ContentType: contentType,
 	}
 
@@ -131,15 +133,15 @@ func GetMail(id string) (mailitem.MailItem, error) {
 	rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &boundary)
 
 	result = mailitem.MailItem{
-		Id:              mailItemId,
-		DateSent:        dateSent,
-		FromAddress:     fromAddress,
-		ToAddresses:     strings.Split(toAddressList, "; "),
-		Subject:         subject,
-		XMailer:         xmailer,
-		Body:            body,
-		ContentType:     contentType,
-		Boundary:        boundary,
+		Id:          mailItemId,
+		DateSent:    dateSent,
+		FromAddress: fromAddress,
+		ToAddresses: strings.Split(toAddressList, "; "),
+		Subject:     subject,
+		XMailer:     xmailer,
+		Body:        body,
+		ContentType: contentType,
+		Boundary:    boundary,
 	}
 
 	/*
@@ -170,10 +172,10 @@ func GetMail(id string) (mailitem.MailItem, error) {
 		attachmentRows.Scan(&attachmentId, &fileName, &contentType)
 
 		newAttachment := &attachment.Attachment{
-			Id: attachmentId,
+			Id:     attachmentId,
 			MailId: mailItemId,
 			Headers: &attachment.AttachmentHeader{
-				FileName: fileName,
+				FileName:    fileName,
 				ContentType: contentType,
 			},
 		}
@@ -221,15 +223,15 @@ func GetMailCollection(offset, length int) ([]mailitem.MailItem, error) {
 		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &boundary)
 
 		newItem := mailitem.MailItem{
-			Id:              mailItemId,
-			DateSent:        dateSent,
-			FromAddress:     fromAddress,
-			ToAddresses:     strings.Split(toAddressList, "; "),
-			Subject:         subject,
-			XMailer:         xmailer,
-			Body:            body,
-			ContentType:     contentType,
-			Boundary:        boundary,
+			Id:          mailItemId,
+			DateSent:    dateSent,
+			FromAddress: fromAddress,
+			ToAddresses: strings.Split(toAddressList, "; "),
+			Subject:     subject,
+			XMailer:     xmailer,
+			Body:        body,
+			ContentType: contentType,
+			Boundary:    boundary,
 		}
 
 		/*
@@ -257,8 +259,8 @@ func GetMailCollection(offset, length int) ([]mailitem.MailItem, error) {
 			attachmentRows.Scan(&attachmentId, &fileName)
 
 			newAttachment := &attachment.Attachment{
-				Id: attachmentId,
-				MailId: mailItemId,
+				Id:      attachmentId,
+				MailId:  mailItemId,
 				Headers: &attachment.AttachmentHeader{FileName: fileName},
 			}
 
@@ -335,18 +337,18 @@ func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*att
 }
 
 func StoreMail(mailItem *mailitem.MailItem) (string, error) {
-		/*
-		 * Create a transaction and insert the new mail item
-		 */
-		transaction, err := golangdb.Db["lib"].Begin()
-		if err != nil {
-			return "", fmt.Errorf("Error starting transaction in StoreMail: %s", err)
-		}
+	/*
+	 * Create a transaction and insert the new mail item
+	 */
+	transaction, err := golangdb.Db["lib"].Begin()
+	if err != nil {
+		return "", fmt.Errorf("Error starting transaction in StoreMail: %s", err)
+	}
 
-		/*
-		 * Insert the mail item
-		 */
-		statement, err := transaction.Prepare(`
+	/*
+	 * Insert the mail item
+	 */
+	statement, err := transaction.Prepare(`
 			INSERT INTO mailitem (
 				  id
 				, dateSent
@@ -370,39 +372,39 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 			)
 		`)
 
-		if err != nil {
-			return "", fmt.Errorf("Error preparing insert statement for mail item in StoreMail: %s", err)
-		}
+	if err != nil {
+		return "", fmt.Errorf("Error preparing insert statement for mail item in StoreMail: %s", err)
+	}
 
-		_, err = statement.Exec(
-			mailItem.Id,
-			mailItem.DateSent,
-			mailItem.FromAddress,
-			strings.Join(mailItem.ToAddresses, "; "),
-			mailItem.Subject,
-			mailItem.XMailer,
-			mailItem.Body,
-			mailItem.ContentType,
-			mailItem.Boundary,
-		)
+	_, err = statement.Exec(
+		mailItem.Id,
+		mailItem.DateSent,
+		mailItem.FromAddress,
+		strings.Join(mailItem.ToAddresses, "; "),
+		mailItem.Subject,
+		mailItem.XMailer,
+		mailItem.Body,
+		mailItem.ContentType,
+		mailItem.Boundary,
+	)
 
-		if err != nil {
-			transaction.Rollback()
-			return "", fmt.Errorf("Error executing insert for mail item in StoreMail: %s", err)
-		}
+	if err != nil {
+		transaction.Rollback()
+		return "", fmt.Errorf("Error executing insert for mail item in StoreMail: %s", err)
+	}
 
-		statement.Close()
+	statement.Close()
 
-		/*
-		 * Insert attachments
-		 */
-		if err = storeAttachments(mailItem.Id, transaction, mailItem.Attachments); err != nil {
-			transaction.Rollback()
-			return "", fmt.Errorf("Unable to insert attachments in StoreMail: %s", err)
-		}
+	/*
+	 * Insert attachments
+	 */
+	if err = storeAttachments(mailItem.Id, transaction, mailItem.Attachments); err != nil {
+		transaction.Rollback()
+		return "", fmt.Errorf("Unable to insert attachments in StoreMail: %s", err)
+	}
 
-		transaction.Commit()
-		log.Printf("New mail item written to database.\n\n")
+	transaction.Commit()
+	log.Printf("New mail item written to database.\n\n")
 
-		return mailItem.Id, nil
+	return mailItem.Id, nil
 }

@@ -60,7 +60,7 @@ func Dispatcher(serverPool *ServerPool, handle *net.TCPListener, receivers []rec
 
 		for {
 			select {
-			case item := <- mailItemChannel:
+			case item := <-mailItemChannel:
 				for _, r := range receivers {
 					go r.Receive(&item)
 				}

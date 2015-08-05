@@ -17,7 +17,7 @@ import (
 	"github.com/mailslurper/libmailslurper/smtpio"
 )
 
-type SmtpWorker struct{
+type SmtpWorker struct {
 	Connection *net.TCPConn
 	Mail       mailitem.MailItem
 	Reader     smtpio.SmtpReader
@@ -260,6 +260,7 @@ func (this *SmtpWorker) Work() {
 			}
 
 			if this.TimeoutHasExpired(startTime) {
+				log.Println("ERROR - Connection timeout. Terminating client connection")
 				this.State = smtpconstants.SMTP_WORKER_ERROR
 				continue
 			}
@@ -268,8 +269,11 @@ func (this *SmtpWorker) Work() {
 		this.Writer.SayGoodbye()
 		this.Connection.Close()
 
+		if this.State != smtpconstants.SMTP_WORKER_ERROR {
+			this.Receiver <- this.Mail
+		}
+
 		this.State = smtpconstants.SMTP_WORKER_IDLE
-		this.Receiver <- this.Mail
 	}()
 }
 

@@ -194,16 +194,17 @@ func GetMail(id string) (mailitem.MailItem, error) {
 /*
 Retrieves all stored mail items as an array of MailItem items. Only
 returns rows starting at offset and gets up to length records. NOTE:
-This code stinks. It gets ALL rows, then returns a slice. Ick!
+This code stinks. It gets ALL rows, then returns a slice and the total number
+of mail items. Ick!
 */
-func GetMailCollection(offset, length int) ([]mailitem.MailItem, error) {
+func GetMailCollection(offset, length int) ([]mailitem.MailItem, int, error) {
 	result := make([]mailitem.MailItem, 0)
 
 	sql := getMailQuery("")
 	rows, err := golangdb.Db["lib"].Query(sql)
 
 	if err != nil {
-		return result, fmt.Errorf("Error running query to get mail items: %s", err)
+		return result, 0, fmt.Errorf("Error running query to get mail items: %s", err)
 	}
 
 	/*
@@ -247,7 +248,7 @@ func GetMailCollection(offset, length int) ([]mailitem.MailItem, error) {
 
 		attachmentRows, err := golangdb.Db["lib"].Query(sql, mailItemId)
 		if err != nil {
-			return result, err
+			return result, 0, err
 		}
 
 		attachments := make([]*attachment.Attachment, 0)
@@ -275,19 +276,8 @@ func GetMailCollection(offset, length int) ([]mailitem.MailItem, error) {
 
 	rows.Close()
 
-	start := offset
-	end := offset + length
-
-	if start > len(result) {
-		start = 0
-		end = start + length
-	}
-
-	if end > len(result) {
-		end = len(result)
-	}
-
-	return result[start:end], nil
+	totalRecords := len(result)
+	return result, totalRecords, nil
 }
 
 func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*attachment.Attachment) error {

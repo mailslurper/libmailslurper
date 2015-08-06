@@ -4,12 +4,13 @@
 
 package server
 
-import(
+import (
 	"errors"
 	"log"
 	"net"
 
 	"github.com/mailslurper/libmailslurper/model/mailitem"
+	"github.com/mailslurper/libmailslurper/sanitization"
 	"github.com/mailslurper/libmailslurper/smtpconstants"
 	"github.com/mailslurper/libmailslurper/smtpio"
 )
@@ -19,7 +20,7 @@ This structure represents a pool of SMTP workers. This will
 manage how many workers may respond to SMTP client requests
 and allocation of those workers.
 */
-type ServerPool struct{
+type ServerPool struct {
 	SmtpWorkers []SmtpWorker
 	MaxWorkers  int
 }
@@ -30,11 +31,19 @@ workers. An array of workers is initialized with an ID
 and an initial state of SMTP_WORKER_IDLE.
 */
 func NewServerPool(maxWorkers int) *ServerPool {
+	xssService := sanitization.NewXSSService()
+	emailValidationService := sanitization.NewEmailValidationService()
+
 	var workers = make([]SmtpWorker, maxWorkers)
-	result := &ServerPool{MaxWorkers: maxWorkers,}
+	result := &ServerPool{MaxWorkers: maxWorkers}
 
 	for index := 0; index < maxWorkers; index++ {
-		workers[index] = SmtpWorker{WorkerId: index + 1, State: smtpconstants.SMTP_WORKER_IDLE,}
+		workers[index] = SmtpWorker{
+			EmailValidationService: emailValidationService,
+			WorkerId:               index + 1,
+			State:                  smtpconstants.SMTP_WORKER_IDLE,
+			XSSService:             xssService,
+		}
 	}
 
 	log.Println("INFO - Worker pool configured for", maxWorkers, "worker(s)")
@@ -58,9 +67,9 @@ func (this *ServerPool) GetAvailableWorker(connection *net.TCPConn, receiver cha
 			result.State = smtpconstants.SMTP_WORKER_WORKING
 
 			result.Connection = connection
-			result.Reader = smtpio.SmtpReader{Connection: connection,}
+			result.Reader = smtpio.SmtpReader{Connection: connection}
 			result.Receiver = receiver
-			result.Writer = smtpio.SmtpWriter{Connection: connection,}
+			result.Writer = smtpio.SmtpWriter{Connection: connection}
 
 			break
 		}

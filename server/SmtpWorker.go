@@ -13,18 +13,21 @@ import (
 
 	"github.com/mailslurper/libmailslurper/model/attachment"
 	"github.com/mailslurper/libmailslurper/model/mailitem"
+	"github.com/mailslurper/libmailslurper/model/sanitization"
 	"github.com/mailslurper/libmailslurper/smtpconstants"
 	"github.com/mailslurper/libmailslurper/smtpio"
 )
 
 type SmtpWorker struct {
-	Connection *net.TCPConn
-	Mail       mailitem.MailItem
-	Reader     smtpio.SmtpReader
-	Receiver   chan mailitem.MailItem
-	State      smtpconstants.SmtpWorkerState
-	WorkerId   int
-	Writer     smtpio.SmtpWriter
+	Connection             *net.TCPConn
+	EmailValidationService sanitization.EmailValidationProvider
+	Mail                   mailitem.MailItem
+	Reader                 smtpio.SmtpReader
+	Receiver               chan mailitem.MailItem
+	State                  smtpconstants.SmtpWorkerState
+	WorkerId               int
+	Writer                 smtpio.SmtpWriter
+	XSSService             sanitization.XSSServiceProvider
 }
 
 /*
@@ -50,8 +53,13 @@ func (this *SmtpWorker) ExecuteCommand(command smtpconstants.SmtpCommand, stream
 		if err != nil {
 			log.Println("ERROR -", err)
 		} else {
-			this.Mail.FromAddress = response
-			log.Println("Mail from", response)
+			if !this.EmailValidationService.IsValidEmail(response) {
+				log.Println("ERROR - The provided email FROM is invalid:", response)
+				this.Mail.FromAddress = "Invalid address"
+			} else {
+				this.Mail.FromAddress = response
+				log.Println("Mail from", response)
+			}
 		}
 
 	case smtpconstants.RCPT:
@@ -59,7 +67,11 @@ func (this *SmtpWorker) ExecuteCommand(command smtpconstants.SmtpCommand, stream
 		if err != nil {
 			log.Println("ERROR -", err)
 		} else {
-			this.Mail.ToAddresses = append(this.Mail.ToAddresses, response)
+			if !this.EmailValidationService.IsValidEmail(response) {
+				log.Println("ERROR - The provided email RCPT is invalid:", response)
+			} else {
+				this.Mail.ToAddresses = append(this.Mail.ToAddresses, response)
+			}
 		}
 
 	case smtpconstants.DATA:
@@ -68,15 +80,15 @@ func (this *SmtpWorker) ExecuteCommand(command smtpconstants.SmtpCommand, stream
 			log.Println("ERROR -", err)
 		} else {
 			if len(strings.TrimSpace(body.HTMLBody)) <= 0 {
-				this.Mail.Body = body.TextBody
+				this.Mail.Body = this.XSSService.SanitizeString(body.TextBody)
 			} else {
-				this.Mail.Body = body.HTMLBody
+				this.Mail.Body = this.XSSService.SanitizeString(body.HTMLBody)
 			}
 
-			this.Mail.Subject = headers.Subject
+			this.Mail.Subject = this.XSSService.SanitizeString(headers.Subject)
 			this.Mail.DateSent = headers.Date
-			this.Mail.XMailer = headers.XMailer
-			this.Mail.ContentType = headers.ContentType
+			this.Mail.XMailer = this.XSSService.SanitizeString(headers.XMailer)
+			this.Mail.ContentType = this.XSSService.SanitizeString(headers.ContentType)
 			this.Mail.Boundary = headers.Boundary
 			this.Mail.Attachments = body.Attachments
 		}

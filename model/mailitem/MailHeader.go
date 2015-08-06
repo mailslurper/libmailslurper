@@ -107,6 +107,10 @@ func (this *MailHeader) Parse(contents string) {
 
 		case "subject":
 			this.Subject = strings.TrimSpace(strings.Join(splitItem[1:], ""))
+			if this.Subject == "" {
+				this.Subject = "(No Subject)"
+			}
+
 			log.Println("Mail Subject: ", this.Subject)
 		}
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/adampresley/golangdb"
 	"github.com/mailslurper/libmailslurper/model/attachment"
 	"github.com/mailslurper/libmailslurper/model/mailitem"
+	"github.com/mailslurper/libmailslurper/sanitization"
 )
 
 /*
@@ -110,6 +111,7 @@ Returns a single mail item by ID.
 */
 func GetMail(id string) (mailitem.MailItem, error) {
 	result := mailitem.MailItem{}
+	xssService := sanitization.NewXSSService()
 
 	sql := getMailQuery(" AND mailitem.id=? ")
 	rows, err := golangdb.Db["lib"].Query(sql, id)
@@ -137,9 +139,9 @@ func GetMail(id string) (mailitem.MailItem, error) {
 		DateSent:    dateSent,
 		FromAddress: fromAddress,
 		ToAddresses: strings.Split(toAddressList, "; "),
-		Subject:     subject,
-		XMailer:     xmailer,
-		Body:        body,
+		Subject:     xssService.SanitizeString(subject),
+		XMailer:     xssService.SanitizeString(xmailer),
+		Body:        xssService.SanitizeString(body),
 		ContentType: contentType,
 		Boundary:    boundary,
 	}
@@ -175,7 +177,7 @@ func GetMail(id string) (mailitem.MailItem, error) {
 			Id:     attachmentId,
 			MailId: mailItemId,
 			Headers: &attachment.AttachmentHeader{
-				FileName:    fileName,
+				FileName:    xssService.SanitizeString(fileName),
 				ContentType: contentType,
 			},
 		}
@@ -199,6 +201,7 @@ of mail items. Ick!
 */
 func GetMailCollection(offset, length int) ([]mailitem.MailItem, int, error) {
 	result := make([]mailitem.MailItem, 0)
+	xssService := sanitization.NewXSSService()
 
 	sql := getMailQuery("")
 	rows, err := golangdb.Db["lib"].Query(sql)
@@ -228,9 +231,9 @@ func GetMailCollection(offset, length int) ([]mailitem.MailItem, int, error) {
 			DateSent:    dateSent,
 			FromAddress: fromAddress,
 			ToAddresses: strings.Split(toAddressList, "; "),
-			Subject:     subject,
-			XMailer:     xmailer,
-			Body:        body,
+			Subject:     xssService.SanitizeString(subject),
+			XMailer:     xssService.SanitizeString(xmailer),
+			Body:        xssService.SanitizeString(body),
 			ContentType: contentType,
 			Boundary:    boundary,
 		}
@@ -262,7 +265,7 @@ func GetMailCollection(offset, length int) ([]mailitem.MailItem, int, error) {
 			newAttachment := &attachment.Attachment{
 				Id:      attachmentId,
 				MailId:  mailItemId,
-				Headers: &attachment.AttachmentHeader{FileName: fileName},
+				Headers: &attachment.AttachmentHeader{FileName: xssService.SanitizeString(fileName)},
 			}
 
 			attachments = append(attachments, newAttachment)

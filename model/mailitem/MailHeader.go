@@ -81,7 +81,7 @@ func (this *MailHeader) Parse(contents string) {
 			contentTypeSplit := strings.Split(contentType, ";")
 
 			this.ContentType = strings.TrimSpace(contentTypeSplit[0])
-			log.Println("Mail Content-Type: ", this.ContentType)
+			log.Println("libmailslurper: INFO - Mail Content-Type: ", this.ContentType)
 
 			/*
 			 * Check to see if we have a boundary marker
@@ -93,17 +93,17 @@ func (this *MailHeader) Parse(contents string) {
 					boundarySplit := strings.Split(contentTypeRightSide, "=")
 					this.Boundary = strings.Replace(strings.Join(boundarySplit[1:], "="), "\"", "", -1)
 
-					log.Println("Mail Boundary: ", this.Boundary)
+					log.Println("libmailslurper: INFO - Mail Boundary: ", this.Boundary)
 				}
 			}
 
 		case "date":
 			this.Date = datetime.ParseDateTime(strings.Join(splitItem[1:], ":"))
-			log.Println("Mail Date: ", this.Date)
+			log.Println("libmailslurper: INFO - Mail Date: ", this.Date)
 
 		case "mime-version":
 			this.MIMEVersion = strings.TrimSpace(strings.Join(splitItem[1:], ""))
-			log.Println("Mail MIME-Version: ", this.MIMEVersion)
+			log.Println("libmailslurper: INFO - Mail MIME-Version: ", this.MIMEVersion)
 
 		case "subject":
 			this.Subject = strings.TrimSpace(strings.Join(splitItem[1:], ""))
@@ -111,7 +111,7 @@ func (this *MailHeader) Parse(contents string) {
 				this.Subject = "(No Subject)"
 			}
 
-			log.Println("Mail Subject: ", this.Subject)
+			log.Println("libmailslurper: INFO - Mail Subject: ", this.Subject)
 		}
 	}
 }

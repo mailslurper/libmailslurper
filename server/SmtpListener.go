@@ -24,7 +24,7 @@ func SetupSmtpServerListener(address string) (*net.TCPListener, error) {
 		return result, err
 	}
 
-	log.Println("INFO - SMTP listener running on", address)
+	log.Println("libmailslurper: INFO - SMTP listener running on", address)
 	return net.ListenTCP("tcp", tcpAddress)
 }
 
@@ -56,7 +56,7 @@ func Dispatcher(serverPool *ServerPool, handle *net.TCPListener, receivers []rec
 	mailItemChannel := make(chan mailitem.MailItem, 1000)
 
 	go func() {
-		log.Println("INFO -", len(receivers), "receiver(s) listening")
+		log.Println("libmailslurper: INFO -", len(receivers), "receiver(s) listening")
 
 		for {
 			select {
@@ -74,12 +74,12 @@ func Dispatcher(serverPool *ServerPool, handle *net.TCPListener, receivers []rec
 	for {
 		connection, err := handle.Accept()
 		if err != nil {
-			log.Panicf("ERROR - Error while accepting SMTP requests: %s", err)
+			log.Panicf("libmailslurper: ERROR - Error while accepting SMTP requests: %s", err)
 		}
 
 		smtpWorker, err := serverPool.GetAvailableWorker(connection.(*net.TCPConn), mailItemChannel)
 		if err != nil {
-			log.Println("ERROR -", err)
+			log.Println("libmailslurper: ERROR - Problem getting available server pool worker -", err)
 			continue
 		}
 

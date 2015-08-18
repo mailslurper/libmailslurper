@@ -11,7 +11,7 @@ import (
 	"github.com/mailslurper/libmailslurper/smtpconstants"
 )
 
-type SmtpWriter struct{
+type SmtpWriter struct {
 	Connection *net.TCPConn
 }
 
@@ -34,7 +34,7 @@ func (this *SmtpWriter) SayHello() error {
 		return err
 	}
 
-	log.Println("Reading data from client connection...")
+	log.Println("libmailslurper: INFO - Reading data from client connection...")
 	return nil
 }
 

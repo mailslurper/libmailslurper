@@ -4,7 +4,7 @@
 
 package receiver
 
-import(
+import (
 	"log"
 
 	"github.com/mailslurper/libmailslurper/model/mailitem"
@@ -16,10 +16,10 @@ type DatabaseReceiver struct{}
 func (this DatabaseReceiver) Receive(mailItem *mailitem.MailItem) error {
 	newId, err := storage.StoreMail(mailItem)
 	if err != nil {
-		log.Println("ERROR - There was an error while storing your mail item:", err)
+		log.Println("libmailslurper: ERROR - There was an error while storing your mail item:", err)
 		return err
 	}
 
-	log.Println("INFO - Mail item", newId, "written")
+	log.Println("libmailslurper: INFO - Mail item", newId, "written")
 	return nil
 }

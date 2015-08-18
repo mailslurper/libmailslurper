@@ -11,7 +11,7 @@ import (
 )
 
 func CreateSqlliteDatabase() error {
-	log.Println("INFO - Creating tables...")
+	log.Println("libmailslurper: INFO - Creating tables...")
 
 	var err error
 
@@ -47,6 +47,6 @@ func CreateSqlliteDatabase() error {
 		return err
 	}
 
-	log.Println("INFO - Created tables successfully.")
+	log.Println("libmailslurper: INFO - Created tables successfully.")
 	return nil
 }

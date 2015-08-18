@@ -46,7 +46,7 @@ func NewServerPool(maxWorkers int) *ServerPool {
 		}
 	}
 
-	log.Println("INFO - Worker pool configured for", maxWorkers, "worker(s)")
+	log.Println("libmailslurper: INFO - Worker pool configured for", maxWorkers, "worker(s)")
 
 	result.SmtpWorkers = workers
 	return result

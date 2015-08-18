@@ -29,7 +29,7 @@ func ParseDateTime(dateString string) string {
 		if err != nil {
 			t, err = time.Parse(thirdForm, dateString)
 			if err != nil {
-				log.Printf("Error parsing date: %s\n", err)
+				log.Printf("libmailslurper: ERROR - Parsing date: %s\n", err)
 				result = dateString
 			} else {
 				result = t.Format(outputForm)

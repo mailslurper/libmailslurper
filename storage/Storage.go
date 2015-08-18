@@ -22,7 +22,7 @@ Creates a global connection handle in a map named "lib".
 func ConnectToStorage(connectionInfo *golangdb.DatabaseConnection) error {
 	var err error
 
-	log.Println("Connecting to database", connectionInfo.Database)
+	log.Println("libmailslurper: IFNO - Connecting to database", connectionInfo.Database)
 
 	err = connectionInfo.Connect("lib")
 	if err != nil {

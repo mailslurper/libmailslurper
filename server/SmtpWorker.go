@@ -51,24 +51,24 @@ func (this *SmtpWorker) ExecuteCommand(command smtpconstants.SmtpCommand, stream
 	case smtpconstants.MAIL:
 		response, err := this.Process_MAIL(streamInput)
 		if err != nil {
-			log.Println("ERROR -", err)
+			log.Println("libmailslurper: ERROR - Problem calling Process_MAIL -", err)
 		} else {
 			if !this.EmailValidationService.IsValidEmail(response) {
-				log.Println("ERROR - The provided email FROM is invalid:", response)
+				log.Println("libmailslurper: ERROR - The provided email FROM is invalid:", response)
 				this.Mail.FromAddress = "Invalid address"
 			} else {
 				this.Mail.FromAddress = response
-				log.Println("Mail from", response)
+				log.Println("libmailslurper: INFO - Mail from", response)
 			}
 		}
 
 	case smtpconstants.RCPT:
 		response, err = this.Process_RCPT(streamInput)
 		if err != nil {
-			log.Println("ERROR -", err)
+			log.Println("libmailslurper: ERROR - Problem calling Process_RCPT -", err)
 		} else {
 			if !this.EmailValidationService.IsValidEmail(response) {
-				log.Println("ERROR - The provided email RCPT is invalid:", response)
+				log.Println("libmailslurper: ERROR - The provided email RCPT is invalid:", response)
 			} else {
 				this.Mail.ToAddresses = append(this.Mail.ToAddresses, response)
 			}
@@ -77,7 +77,7 @@ func (this *SmtpWorker) ExecuteCommand(command smtpconstants.SmtpCommand, stream
 	case smtpconstants.DATA:
 		headers, body, err = this.Process_DATA(streamInput)
 		if err != nil {
-			log.Println("ERROR -", err)
+			log.Println("libmailslurper: ERROR - Problem calling Process_DATA -", err)
 		} else {
 			if len(strings.TrimSpace(body.HTMLBody)) <= 0 {
 				this.Mail.Body = this.XSSService.SanitizeString(body.TextBody)
@@ -254,25 +254,25 @@ func (this *SmtpWorker) Work() {
 			command, err = smtpconstants.GetCommandFromString(streamInput)
 
 			if err != nil {
-				log.Println("ERROR finding command from input", streamInput, "-", err)
+				log.Println("libmailslurper: ERROR finding command from input", streamInput, "-", err)
 				this.State = smtpconstants.SMTP_WORKER_ERROR
 				continue
 			}
 
 			if command == smtpconstants.QUIT {
 				this.State = smtpconstants.SMTP_WORKER_DONE
-				log.Println("Closing connection")
+				log.Println("libmailslurper: INFO - Closing connection")
 			} else {
 				err = this.ExecuteCommand(command, streamInput)
 				if err != nil {
 					this.State = smtpconstants.SMTP_WORKER_ERROR
-					log.Println("ERROR - Error executing command", command.String())
+					log.Println("libmailslurper: ERROR - Error executing command", command.String())
 					continue
 				}
 			}
 
 			if this.TimeoutHasExpired(startTime) {
-				log.Println("ERROR - Connection timeout. Terminating client connection")
+				log.Println("libmailslurper: INFO - Connection timeout. Terminating client connection")
 				this.State = smtpconstants.SMTP_WORKER_ERROR
 				continue
 			}

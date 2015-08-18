@@ -70,7 +70,7 @@ func (this *AttachmentHeader) Parse(contents string) {
 		switch strings.ToLower(key) {
 		case "content-disposition":
 			contentDisposition := strings.TrimSpace(strings.Join(splitItem[1:], ""))
-			log.Println("Attachment Content-Disposition: ", contentDisposition)
+			log.Println("libmailslurper: INFO - Attachment Content-Disposition: ", contentDisposition)
 
 			contentDispositionSplit := strings.Split(contentDisposition, ";")
 			contentDispositionRightSide := strings.TrimSpace(strings.Join(contentDispositionSplit[1:], ";"))
@@ -91,11 +91,11 @@ func (this *AttachmentHeader) Parse(contents string) {
 
 		case "content-transfer-encoding":
 			this.ContentTransferEncoding = strings.TrimSpace(strings.Join(splitItem[1:], ""))
-			log.Println("Attachment Content-Transfer-Encoding: ", this.ContentTransferEncoding)
+			log.Println("libmailslurper: INFO - Attachment Content-Transfer-Encoding: ", this.ContentTransferEncoding)
 
 		case "content-type":
 			contentType := strings.TrimSpace(strings.Join(splitItem[1:], ""))
-			log.Println("Attachment Content-Type: ", contentType)
+			log.Println("libmailslurper: INFO - Attachment Content-Type: ", contentType)
 
 			contentTypeSplit := strings.Split(contentType, ";")
 
@@ -116,7 +116,7 @@ func (this *AttachmentHeader) Parse(contents string) {
 
 		case "mime-version":
 			this.MIMEVersion = strings.TrimSpace(strings.Join(splitItem[1:], ""))
-			log.Println("Attachment MIME-Version: ", this.MIMEVersion)
+			log.Println("libmailslurper: INFO - Attachment MIME-Version: ", this.MIMEVersion)
 		}
 	}
 }

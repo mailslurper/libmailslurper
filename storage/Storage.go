@@ -283,6 +283,21 @@ func GetMailCollection(offset, length int) ([]mailitem.MailItem, int, error) {
 	return result, totalRecords, nil
 }
 
+/*
+GetMailCount returns a count of mail items in the storage system.
+*/
+func GetMailCount() (int, error) {
+	var mailItemCount int
+	var err error
+
+	err = golangdb.Db["lib"].QueryRow(`SELECT COUNT(id) AS mailItemCount FROM mailitem`).Scan(&mailItemCount)
+	if err != nil {
+		return 0, fmt.Errorf("Error running query to get mail item count: %s", err)
+	}
+
+	return mailItemCount, nil
+}
+
 func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*attachment.Attachment) error {
 	for _, a := range attachments {
 		attachmentId, err := mailitem.GenerateId()

@@ -41,23 +41,18 @@ func ConnectToStorage(connectionInfo *golangdb.DatabaseConnection) error {
 DeleteMails deletes a set of email and their attachments. If the optional start/end
 dates are not empty strings then the delete is date-filtered.
 */
-func DeleteMails(startDate, endDate string) error {
+func DeleteMails(startDate string) error {
 	where := ""
+	parameters := []interface{}{}
 	var err error
 
-	if len(startDate) > 0 && len(endDate) > 0 {
-		where = where + " AND dateSent >= ? "
-		where = where + " AND dateSend <= ? "
+	if len(startDate) > 0 {
+		where = where + " AND dateSent <= ? "
+		parameters = append(parameters, startDate)
 	}
 
 	sql := "DELETE FROM mailitem WHERE 1=1" + where
-
-	if len(where) > 0 {
-		_, err = golangdb.Db["lib"].Exec(sql)
-	} else {
-		_, err = golangdb.Db["lib"].Exec(sql, startDate, endDate)
-	}
-
+	_, err = golangdb.Db["lib"].Exec(sql, parameters...)
 	return err
 }
 

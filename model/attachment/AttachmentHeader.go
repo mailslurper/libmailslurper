@@ -42,7 +42,8 @@ func (this *AttachmentHeader) Parse(contents string) {
 
 	headerBodySplit := strings.Split(contents, "\r\n\r\n")
 	if len(headerBodySplit) < 2 {
-		panic("Expected attachment to contain a header section and a body section")
+		log.Println("libmailslurper: ERROR - Expected attachment to contain a header section and a body section")
+		return
 	}
 
 	contents = headerBodySplit[0]

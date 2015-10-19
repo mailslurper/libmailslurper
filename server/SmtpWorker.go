@@ -28,6 +28,8 @@ type SmtpWorker struct {
 	WorkerId               int
 	Writer                 smtpio.SmtpWriter
 	XSSService             sanitization.XSSServiceProvider
+
+	pool ServerPool
 }
 
 /*
@@ -115,6 +117,45 @@ func (this *SmtpWorker) InitializeMailItem() {
 	 */
 	id, _ := mailitem.GenerateId()
 	this.Mail.Id = id
+}
+
+/*
+NewSmtpWorker creates a new SMTP worker. An SMTP worker is
+responsible for parsing and working with SMTP mail data.
+*/
+func NewSmtpWorker(
+	workerID int,
+	pool ServerPool,
+	emailValidationService sanitization.EmailValidationProvider,
+	xssService sanitization.XSSServiceProvider,
+) *SmtpWorker {
+	return &SmtpWorker{
+		EmailValidationService: emailValidationService,
+		WorkerId:               workerID,
+		State:                  smtpconstants.SMTP_WORKER_IDLE,
+		XSSService:             xssService,
+
+		pool: pool,
+	}
+}
+
+/*
+Prepare tells a worker about the TCP connection they will work
+with, the IO handlers, and sets their state.
+*/
+func (this *SmtpWorker) Prepare(
+	connection *net.TCPConn,
+	receiver chan mailitem.MailItem,
+	reader smtpio.SmtpReader,
+	writer smtpio.SmtpWriter,
+) {
+	this.State = smtpconstants.SMTP_WORKER_WORKING
+
+	this.Connection = connection
+	this.Receiver = receiver
+
+	this.Reader = reader
+	this.Writer = writer
 }
 
 /*
@@ -229,6 +270,10 @@ func (this *SmtpWorker) Process_RCPT(streamInput string) (string, error) {
 	return to, nil
 }
 
+func (this *SmtpWorker) rejoinWorkerQueue() {
+	this.pool.JoinQueue(this)
+}
+
 /*
 This is the function called by the SmtpListener when a client request
 is received. This will start the process by responding to the client,
@@ -286,6 +331,7 @@ func (this *SmtpWorker) Work() {
 		}
 
 		this.State = smtpconstants.SMTP_WORKER_IDLE
+		this.rejoinWorkerQueue()
 	}()
 }
 

@@ -48,7 +48,7 @@ and parser and the parser process is started. If the parsing is successful
 the MailItemStruct is added to a channel. An receivers passed in will be
 listening on that channel and may do with the mail item as they wish.
 */
-func Dispatcher(serverPool *ServerPool, handle *net.TCPListener, receivers []receiver.IMailItemReceiver) {
+func Dispatcher(serverPool ServerPool, handle *net.TCPListener, receivers []receiver.IMailItemReceiver) {
 	/*
 	 * Setup our receivers. These guys are basically subscribers to
 	 * the MailItem channel.
@@ -77,12 +77,6 @@ func Dispatcher(serverPool *ServerPool, handle *net.TCPListener, receivers []rec
 			log.Panicf("libmailslurper: ERROR - Error while accepting SMTP requests: %s", err)
 		}
 
-		smtpWorker, err := serverPool.GetAvailableWorker(connection.(*net.TCPConn), mailItemChannel)
-		if err != nil {
-			log.Println("libmailslurper: ERROR - Problem getting available server pool worker -", err)
-			continue
-		}
-
-		smtpWorker.Work()
+		serverPool.NextWorker(connection.(*net.TCPConn), mailItemChannel).Work()
 	}
 }

@@ -56,6 +56,9 @@ NextWorker retrieves the next available worker from
 the queue.
 */
 func (pool ServerPool) NextWorker(connection *net.TCPConn, receiver chan mailitem.MailItem) *SmtpWorker {
+	/*
+	 * TODO: This blocks until a worker is available. Perhaps implement a timeout?
+	 */
 	worker := <-pool
 	worker.Prepare(
 		connection,

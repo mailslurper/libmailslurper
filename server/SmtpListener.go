@@ -48,7 +48,7 @@ and parser and the parser process is started. If the parsing is successful
 the MailItemStruct is added to a channel. An receivers passed in will be
 listening on that channel and may do with the mail item as they wish.
 */
-func Dispatcher(serverPool ServerPool, handle *net.TCPListener, receivers []receiver.IMailItemReceiver) {
+func Dispatch(serverPool ServerPool, handle *net.TCPListener, receivers []receiver.IMailItemReceiver) {
 	/*
 	 * Setup our receivers. These guys are basically subscribers to
 	 * the MailItem channel.

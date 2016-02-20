@@ -30,7 +30,7 @@ func ParseDateTime(dateString string) string {
 	result := ""
 
 	for _, inputFormat := range dateInputFormats {
-		if parsedTime, err = time.Parse(inputFormat, dateString); err != nil {
+		if parsedTime, err = time.Parse(inputFormat, dateString); err == nil {
 			result = parsedTime.Format(outputFormat)
 			break
 		}

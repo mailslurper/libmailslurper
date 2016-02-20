@@ -15,9 +15,9 @@ type IStorage interface {
 
 	GetAttachment(mailID, attachmentID string) (attachment.Attachment, error)
 	GetMailByID(id string) (mailitem.MailItem, error)
-	GetMailCollection(offset, length int) ([]mailitem.MailItem, int, error)
+	GetMailCollection(offset, length int) ([]mailitem.MailItem, error)
 	GetMailCount() (int, error)
 
-	DeleteMailsFromStartDate(startDate string) error
+	DeleteMailsAfterDate(startDate string) error
 	StoreMail(mailItem *mailitem.MailItem) (string, error)
 }

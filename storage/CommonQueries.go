@@ -36,7 +36,6 @@ func getMailCountQuery() string {
 
 func getDeleteMailQuery(startDate string) string {
 	where := ""
-	var err error
 
 	if len(startDate) > 0 {
 		where = where + " AND dateSent <= ? "

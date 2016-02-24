@@ -18,7 +18,7 @@ MSSQLStorage implements the IStorage interface
 type MSSQLStorage struct {
 	connectionInformation *ConnectionInformation
 	db                    *sql.DB
-	xssService            *sanitizer.XSSServiceProvider
+	xssService            sanitizer.XSSServiceProvider
 }
 
 /*
@@ -112,14 +112,12 @@ func (storage *MSSQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, 
 	var subject string
 	var xmailer string
 	var body string
-	var contentType string
 	var boundary string
-
 	var attachmentID sql.NullString
 	var fileName string
 	var contentType string
 
-	sqlQuery := getMailQuery(" AND mailitem.id=? ")
+	sqlQuery := getMailAndAttachmentsQuery(" AND mailitem.id=? ")
 
 	if rows, err = storage.db.Query(sqlQuery, mailItemID); err != nil {
 		return result, fmt.Errorf("Error running query to get mail item: %s", err.Error())
@@ -191,10 +189,8 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int) ([]mailitem.M
 	var body string
 	var contentType string
 	var boundary string
-
 	var attachmentID sql.NullString
 	var fileName string
-	var contentType string
 
 	/*
 	 * This query is MSSQL 2005 and higher compatible
@@ -322,7 +318,7 @@ func (storage *MSSQLStorage) GetMailCount() (int, error) {
 DeleteMailsAfterDate deletes all mails after a specified date
 */
 func (storage *MSSQLStorage) DeleteMailsAfterDate(startDate string) error {
-	sqlQuery = getDeleteMailQuery(startDate)
+	sqlQuery := getDeleteMailQuery(startDate)
 	parameters := []interface{}{}
 	var err error
 
@@ -416,7 +412,7 @@ func storeAttachments(mailItemID string, transaction *sql.Tx, attachments []*att
 		}
 
 		statement.Close()
-		currentAttachment.Id = attachmentId
+		currentAttachment.Id = attachmentID
 	}
 
 	return nil

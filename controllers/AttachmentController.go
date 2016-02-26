@@ -45,7 +45,7 @@ func DownloadAttachment(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	if attachmentID, ok = vars["attachmentId"]; !ok {
+	if attachmentID, ok = vars["attachmentID"]; !ok {
 		log.Error("No valid attachment ID passed to DownloadAttachment")
 		GoHttpService.BadRequest(writer, "A valid attachment ID is required")
 		return

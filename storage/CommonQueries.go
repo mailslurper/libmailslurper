@@ -1,9 +1,13 @@
 package storage
 
 import (
+	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
+	"github.com/mailslurper/libmailslurper/model/attachment"
+	"github.com/mailslurper/libmailslurper/model/mailitem"
 	"github.com/mailslurper/libmailslurper/model/search"
 )
 
@@ -154,4 +158,37 @@ func addSearchCriteria(sqlQuery string, parameters []interface{}, mailSearch *se
 	}
 
 	return sqlQuery, parameters
+}
+
+func storeAttachments(mailItemID string, transaction *sql.Tx, attachments []*attachment.Attachment) error {
+	var err error
+	var attachmentID string
+
+	for _, currentAttachment := range attachments {
+		if attachmentID, err = mailitem.GenerateId(); err != nil {
+			return fmt.Errorf("Error generating ID for attachment: %s", err.Error())
+		}
+
+		statement, err := transaction.Prepare(getInsertAttachmentQuery())
+		if err != nil {
+			return fmt.Errorf("Error preparing insert attachment statement: %s", err.Error())
+		}
+
+		_, err = statement.Exec(
+			attachmentID,
+			mailItemID,
+			currentAttachment.Headers.FileName,
+			currentAttachment.Headers.ContentType,
+			currentAttachment.Contents,
+		)
+
+		if err != nil {
+			return fmt.Errorf("Error executing insert attachment in StoreMail: %s", err.Error())
+		}
+
+		statement.Close()
+		currentAttachment.Id = attachmentID
+	}
+
+	return nil
 }

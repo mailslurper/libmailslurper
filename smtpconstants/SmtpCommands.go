@@ -17,11 +17,11 @@ send during the course of communicating with our server.
 */
 const (
 	NONE SmtpCommand = iota
-	DATA SmtpCommand = iota
 	RCPT SmtpCommand = iota
 	MAIL SmtpCommand = iota
 	HELO SmtpCommand = iota
 	RSET SmtpCommand = iota
+	DATA SmtpCommand = iota
 	QUIT SmtpCommand = iota
 )
 
@@ -67,7 +67,7 @@ func GetCommandFromString(input string) (SmtpCommand, error) {
 	}
 
 	for key, value := range SmtpCommands {
-		if strings.Index(strings.ToLower(input), key) > -1 {
+		if strings.Index(strings.ToLower(input), key) == 0 {
 			result = value
 			break
 		}

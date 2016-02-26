@@ -1,4 +1,4 @@
-// Copyright 2013-2014 Adam Presley. All rights reserved
+// Copyright 2013-2016 Adam Presley. All rights reserved
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
@@ -12,8 +12,9 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
-	"github.com/adampresley/golangdb"
+	"github.com/mailslurper/libmailslurper/storage"
 )
 
 /*
@@ -35,21 +36,35 @@ type Configuration struct {
 	DBUserName     string `json:"dbUserName"`
 	DBPassword     string `json:"dbPassword"`
 	MaxWorkers     int    `json:"maxWorkers"`
+
+	StorageType storage.StorageType
 }
 
 /*
 Returns a pointer to a DatabaseConnection structure with data
 pulled from a Configuration structure.
 */
-func (this *Configuration) GetDatabaseConfiguration() *golangdb.DatabaseConnection {
-	return &golangdb.DatabaseConnection{
-		Engine:   golangdb.GetDatabaseEngineFromName(this.DBEngine),
-		Address:  this.DBHost,
-		Port:     this.DBPort,
-		Database: this.DBDatabase,
-		UserName: this.DBUserName,
-		Password: this.DBPassword,
+func (this *Configuration) GetDatabaseConfiguration() (storage.StorageType, *storage.ConnectionInformation) {
+	result := storage.NewConnectionInformation(this.DBHost, this.DBPort)
+	result.SetDatabaseInformation(this.DBDatabase, this.DBUserName, this.DBPassword)
+
+	if strings.ToLower(this.DBEngine) == "sqlite" {
+		result.SetDatabaseFile(this.DBDatabase)
 	}
+
+	return this.getDatabaseEngineFromName(this.DBEngine), result
+}
+
+func (this *Configuration) getDatabaseEngineFromName(engineName string) storage.StorageType {
+	switch strings.ToLower(engineName) {
+	case "mssql":
+		return storage.STORAGE_MSSQL
+
+	case "mysql":
+		return storage.STORAGE_MYSQL
+	}
+
+	return storage.STORAGE_SQLITE
 }
 
 /*

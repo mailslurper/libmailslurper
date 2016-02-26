@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adampresley/sanitizer"
 	"github.com/mailslurper/libmailslurper/model/attachment"
 	"github.com/mailslurper/libmailslurper/model/mailitem"
 	"github.com/mailslurper/libmailslurper/model/sanitization"
@@ -27,7 +28,7 @@ type SmtpWorker struct {
 	State                  smtpconstants.SmtpWorkerState
 	WorkerId               int
 	Writer                 smtpio.SmtpWriter
-	XSSService             sanitization.XSSServiceProvider
+	XSSService             sanitizer.XSSServiceProvider
 
 	pool ServerPool
 }
@@ -127,7 +128,7 @@ func NewSmtpWorker(
 	workerID int,
 	pool ServerPool,
 	emailValidationService sanitization.EmailValidationProvider,
-	xssService sanitization.XSSServiceProvider,
+	xssService sanitizer.XSSServiceProvider,
 ) *SmtpWorker {
 	return &SmtpWorker{
 		EmailValidationService: emailValidationService,

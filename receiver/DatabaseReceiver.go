@@ -11,15 +11,25 @@ import (
 	"github.com/mailslurper/libmailslurper/storage"
 )
 
-type DatabaseReceiver struct{}
+type DatabaseReceiver struct {
+	database storage.IStorage
+}
+
+func NewDatabaseReceiver(database storage.IStorage) DatabaseReceiver {
+	return DatabaseReceiver{
+		database: database,
+	}
+}
 
 func (this DatabaseReceiver) Receive(mailItem *mailitem.MailItem) error {
-	newId, err := storage.StoreMail(mailItem)
-	if err != nil {
+	var err error
+	var newID string
+
+	if newID, err = this.database.StoreMail(mailItem); err != nil {
 		log.Println("libmailslurper: ERROR - There was an error while storing your mail item:", err)
 		return err
 	}
 
-	log.Println("libmailslurper: INFO - Mail item", newId, "written")
+	log.Println("libmailslurper: INFO - Mail item", newID, "written")
 	return nil
 }

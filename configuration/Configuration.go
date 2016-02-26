@@ -59,6 +59,9 @@ func (this *Configuration) getDatabaseEngineFromName(engineName string) storage.
 	switch strings.ToLower(engineName) {
 	case "mssql":
 		return storage.STORAGE_MSSQL
+
+	case "mysql":
+		return storage.STORAGE_MYSQL
 	}
 
 	return storage.STORAGE_SQLITE

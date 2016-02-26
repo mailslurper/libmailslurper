@@ -78,7 +78,7 @@ func (storage *SQLiteStorage) Create() error {
 	sqlStatement = `
 		CREATE TABLE attachment (
 			id TEXT PRIMARY KEY,
-			mailItemId INTEGER,
+			mailItemId TEXT,
 			fileName TEXT,
 			contentType TEXT,
 			content TEXT
@@ -267,7 +267,6 @@ func (storage *SQLiteStorage) GetMailCollection(offset, length int, mailSearch *
 	parameters = append(parameters, length)
 	parameters = append(parameters, offset)
 
-	log.Printf("SQL: %s", sqlQuery)
 	if rows, err = storage.db.Query(sqlQuery, parameters...); err != nil {
 		return result, fmt.Errorf("Error running query to get mail collection: %s", err.Error())
 	}

@@ -22,6 +22,9 @@ func ConnectToStorage(storageType StorageType, connectionInfo *ConnectionInforma
 
 	case STORAGE_MSSQL:
 		storageHandle = NewMSSQLStorage(connectionInfo)
+
+	case STORAGE_MYSQL:
+		storageHandle = NewMySQLStorage(connectionInfo)
 	}
 
 	if err = storageHandle.Connect(); err != nil {

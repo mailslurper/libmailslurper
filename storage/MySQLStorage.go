@@ -7,26 +7,26 @@ import (
 	"strings"
 
 	"github.com/adampresley/sanitizer"
-	_ "github.com/denisenkom/go-mssqldb"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/mailslurper/libmailslurper/model/attachment"
 	"github.com/mailslurper/libmailslurper/model/mailitem"
 	"github.com/mailslurper/libmailslurper/model/search"
 )
 
 /*
-MSSQLStorage implements the IStorage interface
+MySQLStorage implements the IStorage interface
 */
-type MSSQLStorage struct {
+type MySQLStorage struct {
 	connectionInformation *ConnectionInformation
 	db                    *sql.DB
 	xssService            sanitizer.XSSServiceProvider
 }
 
 /*
-NewMSSQLStorage creates a new storage object that interfaces to MSSQL
+MySQLStorage creates a new storage object that interfaces to MySQL
 */
-func NewMSSQLStorage(connectionInformation *ConnectionInformation) *MSSQLStorage {
-	return &MSSQLStorage{
+func NewMySQLStorage(connectionInformation *ConnectionInformation) *MySQLStorage {
+	return &MySQLStorage{
 		connectionInformation: connectionInformation,
 		xssService:            sanitizer.NewXSSService(),
 	}
@@ -35,16 +35,18 @@ func NewMSSQLStorage(connectionInformation *ConnectionInformation) *MSSQLStorage
 /*
 Connect to the database
 */
-func (storage *MSSQLStorage) Connect() error {
-	connectionString := fmt.Sprintf("Server=%s;Port=%d;User Id=%s;Password=%s;Database=%s",
-		storage.connectionInformation.Address,
-		storage.connectionInformation.Port,
+func (storage *MySQLStorage) Connect() error {
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?autocommit=true",
 		storage.connectionInformation.UserName,
 		storage.connectionInformation.Password,
+		storage.connectionInformation.Address,
+		storage.connectionInformation.Port,
 		storage.connectionInformation.Database,
 	)
 
-	db, err := sql.Open("mssql", connectionString)
+	db, err := sql.Open("mysql", connectionString)
+	db.SetMaxIdleConns(151)
+	db.SetMaxOpenConns(151)
 
 	storage.db = db
 	return err
@@ -53,18 +55,18 @@ func (storage *MSSQLStorage) Connect() error {
 /*
 Disconnect does exactly what you think it does
 */
-func (storage *MSSQLStorage) Disconnect() {
+func (storage *MySQLStorage) Disconnect() {
 	storage.db.Close()
 }
 
-func (storage *MSSQLStorage) Create() error {
+func (storage *MySQLStorage) Create() error {
 	return nil
 }
 
 /*
 GetAttachment retrieves an attachment for a given mail item
 */
-func (storage *MSSQLStorage) GetAttachment(mailID, attachmentID string) (attachment.Attachment, error) {
+func (storage *MySQLStorage) GetAttachment(mailID, attachmentID string) (attachment.Attachment, error) {
 	result := attachment.Attachment{}
 	var err error
 	var rows *sql.Rows
@@ -104,7 +106,7 @@ func (storage *MSSQLStorage) GetAttachment(mailID, attachmentID string) (attachm
 /*
 GetMailByID retrieves a single mail item and attachment by ID
 */
-func (storage *MSSQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, error) {
+func (storage *MySQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, error) {
 	result := mailitem.MailItem{}
 	attachments := make([]*attachment.Attachment, 0)
 
@@ -179,7 +181,7 @@ func (storage *MSSQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, 
 GetMailCollection retrieves a slice of mail items starting at offset and getting length number
 of records. This query is MSSQL 2005 and higher compatible.
 */
-func (storage *MSSQLStorage) GetMailCollection(offset, length int, mailSearch *search.MailSearch) ([]mailitem.MailItem, error) {
+func (storage *MySQLStorage) GetMailCollection(offset, length int, mailSearch *search.MailSearch) ([]mailitem.MailItem, error) {
 	result := make([]mailitem.MailItem, 0)
 	attachments := make([]*attachment.Attachment, 0)
 
@@ -207,51 +209,34 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int, mailSearch *s
 	 * This query is MSSQL 2005 and higher compatible
 	 */
 	sqlQuery := `
-		WITH pagedMailItems AS (
-			SELECT
-				  mailitem.id
-				, mailitem.dateSent
-				, mailitem.fromAddress
-				, mailitem.toAddressList
-				, mailitem.subject
-				, mailitem.xmailer
-				, mailitem.body
-				, mailitem.contentType
-				, mailitem.boundary
-				, ROW_NUMBER() OVER (ORDER BY mailitem.dateSent DESC) AS rowNumber
-			FROM mailitem
-			WHERE 1=1
+		SELECT
+			  mailitem.id
+			, mailitem.dateSent
+			, mailitem.fromAddress
+			, mailitem.toAddressList
+			, mailitem.subject
+			, mailitem.xmailer
+			, mailitem.body
+			, mailitem.contentType AS mailContentType
+			, mailitem.boundary
+			, attachment.id AS attachmentID
+			, attachment.fileName
+			, attachment.contentType AS attachmentContentType
+		FROM mailitem
+			LEFT JOIN attachment ON attachment.mailItemID=mailitem.id
+
+		WHERE 1=1
 	`
 
 	sqlQuery, parameters = addSearchCriteria(sqlQuery, parameters, mailSearch)
 
 	sqlQuery = sqlQuery + `
-		)
-		SELECT
-			  pagedMailItems.id AS mailItemID
-			, pagedMailItems.dateSent
-			, pagedMailItems.fromAddress
-			, pagedMailItems.toAddressList
-			, pagedMailItems.subject
-			, pagedMailItems.xmailer
-			, pagedMailItems.body
-			, pagedMailItems.contentType AS mailContentType
-			, pagedMailItems.boundary
-			, attachment.id AS attachmentID
-			, attachment.fileName
-			, attachment.contentType AS attachmentContentType
-
-		FROM pagedMailItems
-			LEFT JOIN attachment ON attachment.mailItemID=pagedMailItems.id
-
-		WHERE
-			pagedMailItems.rowNumber BETWEEN ? AND ?
-
-		ORDER BY pagedMailItems.dateSent DESC
+		ORDER BY mailitem.dateSent DESC
+		LIMIT ? OFFSET ?
 	`
 
+	parameters = append(parameters, length)
 	parameters = append(parameters, offset)
-	parameters = append(parameters, offset+length)
 
 	if rows, err = storage.db.Query(sqlQuery, parameters...); err != nil {
 		return result, fmt.Errorf("Error running query to get mail collection: %s", err.Error())
@@ -324,7 +309,7 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int, mailSearch *s
 /*
 GetMailCount returns the number of total records in the mail items table
 */
-func (storage *MSSQLStorage) GetMailCount(mailSearch *search.MailSearch) (int, error) {
+func (storage *MySQLStorage) GetMailCount(mailSearch *search.MailSearch) (int, error) {
 	var mailItemCount int
 	var err error
 
@@ -339,7 +324,7 @@ func (storage *MSSQLStorage) GetMailCount(mailSearch *search.MailSearch) (int, e
 /*
 DeleteMailsAfterDate deletes all mails after a specified date
 */
-func (storage *MSSQLStorage) DeleteMailsAfterDate(startDate string) error {
+func (storage *MySQLStorage) DeleteMailsAfterDate(startDate string) error {
 	sqlQuery := getDeleteMailQuery(startDate)
 	parameters := []interface{}{}
 	var err error
@@ -355,7 +340,7 @@ func (storage *MSSQLStorage) DeleteMailsAfterDate(startDate string) error {
 /*
 StoreMail writes a mail item and its attachments to the storage device. This returns the new mail ID
 */
-func (storage *MSSQLStorage) StoreMail(mailItem *mailitem.MailItem) (string, error) {
+func (storage *MySQLStorage) StoreMail(mailItem *mailitem.MailItem) (string, error) {
 	var err error
 	var transaction *sql.Tx
 	var statement *sql.Stmt

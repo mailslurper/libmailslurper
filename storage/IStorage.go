@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/mailslurper/libmailslurper/model/attachment"
 	"github.com/mailslurper/libmailslurper/model/mailitem"
+	"github.com/mailslurper/libmailslurper/model/search"
 )
 
 /*
@@ -15,8 +16,8 @@ type IStorage interface {
 
 	GetAttachment(mailID, attachmentID string) (attachment.Attachment, error)
 	GetMailByID(id string) (mailitem.MailItem, error)
-	GetMailCollection(offset, length int) ([]mailitem.MailItem, error)
-	GetMailCount() (int, error)
+	GetMailCollection(offset, length int, mailSearch *search.MailSearch) ([]mailitem.MailItem, error)
+	GetMailCount(mailSearch *search.MailSearch) (int, error)
 
 	DeleteMailsAfterDate(startDate string) error
 	StoreMail(mailItem *mailitem.MailItem) (string, error)

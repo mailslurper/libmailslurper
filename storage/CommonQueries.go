@@ -1,5 +1,12 @@
 package storage
 
+import (
+	"strings"
+	"time"
+
+	"github.com/mailslurper/libmailslurper/model/search"
+)
+
 func getMailAndAttachmentsQuery(whereClause string) string {
 	sqlQuery := `
 		SELECT
@@ -26,12 +33,13 @@ func getMailAndAttachmentsQuery(whereClause string) string {
 	return sqlQuery
 }
 
-func getMailCountQuery() string {
+func getMailCountQuery(mailSearch *search.MailSearch) (string, []interface{}) {
 	sqlQuery := `
-		SELECT COUNT(id) AS mailItemCount FROM mailitem
+		SELECT COUNT(id) AS mailItemCount FROM mailitem WHERE 1=1
 	`
 
-	return sqlQuery
+	var parameters []interface{}
+	return addSearchCriteria(sqlQuery, parameters, mailSearch)
 }
 
 func getDeleteMailQuery(startDate string) string {
@@ -91,4 +99,58 @@ func getInsertAttachmentQuery() string {
 	`
 
 	return sqlQuery
+}
+
+func addSearchCriteria(sqlQuery string, parameters []interface{}, mailSearch *search.MailSearch) (string, []interface{}) {
+	var date time.Time
+	var err error
+
+	if len(strings.TrimSpace(mailSearch.Message)) > 0 {
+		sqlQuery += `
+			AND (
+				mailitem.body LIKE '%?%'
+				OR mailitem.subject LIKE '%?%'
+			)
+		`
+
+		parameters = append(parameters, mailSearch.Message)
+	}
+
+	if len(strings.TrimSpace(mailSearch.From)) > 0 {
+		sqlQuery += `
+			AND mailitem.subject LIKE '%?%'
+		`
+
+		parameters = append(parameters, mailSearch.From)
+	}
+
+	if len(strings.TrimSpace(mailSearch.To)) > 0 {
+		sqlQuery += `
+			AND mailitem.toAddressList LIKE '%?%'
+		`
+
+		parameters = append(parameters, mailSearch.To)
+	}
+
+	if len(strings.TrimSpace(mailSearch.Start)) > 0 {
+		if date, err = time.Parse("2006-01-02", mailSearch.Start); err == nil {
+			sqlQuery += `
+				AND mailitem.dateSent >= ?
+			`
+
+			parameters = append(parameters, date)
+		}
+	}
+
+	if len(strings.TrimSpace(mailSearch.End)) > 0 {
+		if date, err = time.Parse("2006-01-02", mailSearch.End); err == nil {
+			sqlQuery += `
+				AND mailitem.dateSent <= ?
+			`
+
+			parameters = append(parameters, date)
+		}
+	}
+
+	return sqlQuery, parameters
 }

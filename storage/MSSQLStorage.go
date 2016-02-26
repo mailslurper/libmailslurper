@@ -10,6 +10,7 @@ import (
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/mailslurper/libmailslurper/model/attachment"
 	"github.com/mailslurper/libmailslurper/model/mailitem"
+	"github.com/mailslurper/libmailslurper/model/search"
 )
 
 /*
@@ -170,7 +171,7 @@ func (storage *MSSQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, 
 GetMailCollection retrieves a slice of mail items starting at offset and getting length number
 of records. This query is MSSQL 2005 and higher compatible.
 */
-func (storage *MSSQLStorage) GetMailCollection(offset, length int) ([]mailitem.MailItem, error) {
+func (storage *MSSQLStorage) GetMailCollection(offset, length int, mailSearch *search.MailSearch) ([]mailitem.MailItem, error) {
 	result := make([]mailitem.MailItem, 0)
 	attachments := make([]*attachment.Attachment, 0)
 
@@ -179,6 +180,7 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int) ([]mailitem.M
 
 	var currentMailItemID string
 	var currentMailItem mailitem.MailItem
+	var parameters []interface{}
 
 	var mailItemID string
 	var dateSent string
@@ -187,10 +189,11 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int) ([]mailitem.M
 	var subject string
 	var xmailer string
 	var body string
-	var contentType string
+	var mailContentType string
 	var boundary string
 	var attachmentID sql.NullString
-	var fileName string
+	var fileName sql.NullString
+	var attachmentContentType sql.NullString
 
 	/*
 	 * This query is MSSQL 2005 and higher compatible
@@ -209,21 +212,26 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int) ([]mailitem.M
 				, mailitem.boundary
 				, ROW_NUMBER() OVER (ORDER BY mailitem.dateSent DESC) AS rowNumber
 			FROM mailitem
-			ORDER BY mailitem.dateSent DESC
+			WHERE 1=1
+	`
+
+	sqlQuery, parameters = addSearchCriteria(sqlQuery, parameters, mailSearch)
+
+	sqlQuery = sqlQuery + `
 		)
 		SELECT
-			  pageMailItems.id AS mailItemID
+			  pagedMailItems.id AS mailItemID
 			, pagedMailItems.dateSent
 			, pagedMailItems.fromAddress
 			, pagedMailItems.toAddressList
 			, pagedMailItems.subject
 			, pagedMailItems.xmailer
 			, pagedMailItems.body
-			, pagedMailItems.contentType
+			, pagedMailItems.contentType AS mailContentType
 			, pagedMailItems.boundary
 			, attachment.id AS attachmentID
 			, attachment.fileName
-			, attachment.contentType
+			, attachment.contentType AS attachmentContentType
 
 		FROM pagedMailItems
 			LEFT JOIN attachment ON attachment.mailItemID=pagedMailItems.id
@@ -234,7 +242,10 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int) ([]mailitem.M
 		ORDER BY pagedMailItems.dateSent DESC
 	`
 
-	if rows, err = storage.db.Query(sqlQuery, offset, offset+length); err != nil {
+	parameters = append(parameters, offset)
+	parameters = append(parameters, offset+length)
+
+	if rows, err = storage.db.Query(sqlQuery, parameters...); err != nil {
 		return result, fmt.Errorf("Error running query to get mail collection: %s", err.Error())
 	}
 
@@ -243,7 +254,7 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int) ([]mailitem.M
 	currentMailItemID = ""
 
 	for rows.Next() {
-		err = rows.Scan(&mailItemID, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &boundary, &attachmentID, &fileName, &contentType)
+		err = rows.Scan(&mailItemID, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &mailContentType, &boundary, &attachmentID, &fileName, &attachmentContentType)
 		if err != nil {
 			return result, fmt.Errorf("Error scanning mail item record: %s", err.Error())
 		}
@@ -266,7 +277,7 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int) ([]mailitem.M
 				Subject:     storage.xssService.SanitizeString(subject),
 				XMailer:     storage.xssService.SanitizeString(xmailer),
 				Body:        storage.xssService.SanitizeString(body),
-				ContentType: contentType,
+				ContentType: mailContentType,
 				Boundary:    boundary,
 			}
 
@@ -279,8 +290,8 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int) ([]mailitem.M
 				Id:     attachmentID.String,
 				MailId: mailItemID,
 				Headers: &attachment.AttachmentHeader{
-					FileName:    storage.xssService.SanitizeString(fileName),
-					ContentType: contentType,
+					FileName:    storage.xssService.SanitizeString(fileName.String),
+					ContentType: attachmentContentType.String,
 				},
 			}
 
@@ -302,12 +313,12 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int) ([]mailitem.M
 /*
 GetMailCount returns the number of total records in the mail items table
 */
-func (storage *MSSQLStorage) GetMailCount() (int, error) {
+func (storage *MSSQLStorage) GetMailCount(mailSearch *search.MailSearch) (int, error) {
 	var mailItemCount int
 	var err error
 
-	sqlQuery := getMailCountQuery()
-	if err = storage.db.QueryRow(sqlQuery).Scan(&mailItemCount); err != nil {
+	sqlQuery, parameters := getMailCountQuery(mailSearch)
+	if err = storage.db.QueryRow(sqlQuery, parameters...).Scan(&mailItemCount); err != nil {
 		return 0, fmt.Errorf("Error running query to get mail item count: %s", err.Error())
 	}
 

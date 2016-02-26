@@ -13,6 +13,7 @@ storage engines. They store and retrieve data for MailSlurper
 type IStorage interface {
 	Connect() error
 	Disconnect()
+	Create() error
 
 	GetAttachment(mailID, attachmentID string) (attachment.Attachment, error)
 	GetMailByID(id string) (mailitem.MailItem, error)

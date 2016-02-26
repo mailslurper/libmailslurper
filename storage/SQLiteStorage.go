@@ -4,29 +4,30 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/adampresley/sanitizer"
-	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/mailslurper/libmailslurper/model/attachment"
 	"github.com/mailslurper/libmailslurper/model/mailitem"
 	"github.com/mailslurper/libmailslurper/model/search"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 /*
-MSSQLStorage implements the IStorage interface
+SQLiteStorage implements the IStorage interface
 */
-type MSSQLStorage struct {
+type SQLiteStorage struct {
 	connectionInformation *ConnectionInformation
 	db                    *sql.DB
 	xssService            sanitizer.XSSServiceProvider
 }
 
 /*
-NewMSSQLStorage creates a new storage object that interfaces to MSSQL
+NewSQLiteStorage creates a new storage object that interfaces to SQLite
 */
-func NewMSSQLStorage(connectionInformation *ConnectionInformation) *MSSQLStorage {
-	return &MSSQLStorage{
+func NewSQLiteStorage(connectionInformation *ConnectionInformation) *SQLiteStorage {
+	return &SQLiteStorage{
 		connectionInformation: connectionInformation,
 		xssService:            sanitizer.NewXSSService(),
 	}
@@ -35,17 +36,8 @@ func NewMSSQLStorage(connectionInformation *ConnectionInformation) *MSSQLStorage
 /*
 Connect to the database
 */
-func (storage *MSSQLStorage) Connect() error {
-	connectionString := fmt.Sprintf("Server=%s;Port=%d;User Id=%s;Password=%s;Database=%s",
-		storage.connectionInformation.Address,
-		storage.connectionInformation.Port,
-		storage.connectionInformation.UserName,
-		storage.connectionInformation.Password,
-		storage.connectionInformation.Database,
-	)
-
-	db, err := sql.Open("mssql", connectionString)
-
+func (storage *SQLiteStorage) Connect() error {
+	db, err := sql.Open("sqlite3", storage.connectionInformation.Filename)
 	storage.db = db
 	return err
 }
@@ -53,18 +45,57 @@ func (storage *MSSQLStorage) Connect() error {
 /*
 Disconnect does exactly what you think it does
 */
-func (storage *MSSQLStorage) Disconnect() {
+func (storage *SQLiteStorage) Disconnect() {
 	storage.db.Close()
 }
 
-func (storage *MSSQLStorage) Create() error {
+func (storage *SQLiteStorage) Create() error {
+	log.Println("INFO - Creating tables...")
+
+	var err error
+
+	if err = os.Remove(storage.connectionInformation.Filename); err != nil {
+		return err
+	}
+
+	sqlStatement := `
+		CREATE TABLE mailitem (
+			id TEXT PRIMARY KEY,
+			dateSent TEXT,
+			fromAddress TEXT,
+			toAddressList TEXT,
+			subject TEXT,
+			xmailer TEXT,
+			body TEXT,
+			contentType TEXT,
+			boundary TEXT
+		);`
+
+	if _, err = storage.db.Exec(sqlStatement); err != nil {
+		return err
+	}
+
+	sqlStatement = `
+		CREATE TABLE attachment (
+			id TEXT PRIMARY KEY,
+			mailItemId INTEGER,
+			fileName TEXT,
+			contentType TEXT,
+			content TEXT
+		);`
+
+	if _, err = storage.db.Exec(sqlStatement); err != nil {
+		return err
+	}
+
+	log.Println("INFO - Created tables successfully.")
 	return nil
 }
 
 /*
 GetAttachment retrieves an attachment for a given mail item
 */
-func (storage *MSSQLStorage) GetAttachment(mailID, attachmentID string) (attachment.Attachment, error) {
+func (storage *SQLiteStorage) GetAttachment(mailID, attachmentID string) (attachment.Attachment, error) {
 	result := attachment.Attachment{}
 	var err error
 	var rows *sql.Rows
@@ -104,7 +135,7 @@ func (storage *MSSQLStorage) GetAttachment(mailID, attachmentID string) (attachm
 /*
 GetMailByID retrieves a single mail item and attachment by ID
 */
-func (storage *MSSQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, error) {
+func (storage *SQLiteStorage) GetMailByID(mailItemID string) (mailitem.MailItem, error) {
 	result := mailitem.MailItem{}
 	attachments := make([]*attachment.Attachment, 0)
 
@@ -179,7 +210,7 @@ func (storage *MSSQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, 
 GetMailCollection retrieves a slice of mail items starting at offset and getting length number
 of records. This query is MSSQL 2005 and higher compatible.
 */
-func (storage *MSSQLStorage) GetMailCollection(offset, length int, mailSearch *search.MailSearch) ([]mailitem.MailItem, error) {
+func (storage *SQLiteStorage) GetMailCollection(offset, length int, mailSearch *search.MailSearch) ([]mailitem.MailItem, error) {
 	result := make([]mailitem.MailItem, 0)
 	attachments := make([]*attachment.Attachment, 0)
 
@@ -325,7 +356,7 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int, mailSearch *s
 /*
 GetMailCount returns the number of total records in the mail items table
 */
-func (storage *MSSQLStorage) GetMailCount(mailSearch *search.MailSearch) (int, error) {
+func (storage *SQLiteStorage) GetMailCount(mailSearch *search.MailSearch) (int, error) {
 	var mailItemCount int
 	var err error
 
@@ -340,7 +371,7 @@ func (storage *MSSQLStorage) GetMailCount(mailSearch *search.MailSearch) (int, e
 /*
 DeleteMailsAfterDate deletes all mails after a specified date
 */
-func (storage *MSSQLStorage) DeleteMailsAfterDate(startDate string) error {
+func (storage *SQLiteStorage) DeleteMailsAfterDate(startDate string) error {
 	sqlQuery := getDeleteMailQuery(startDate)
 	parameters := []interface{}{}
 	var err error
@@ -356,7 +387,7 @@ func (storage *MSSQLStorage) DeleteMailsAfterDate(startDate string) error {
 /*
 StoreMail writes a mail item and its attachments to the storage device. This returns the new mail ID
 */
-func (storage *MSSQLStorage) StoreMail(mailItem *mailitem.MailItem) (string, error) {
+func (storage *SQLiteStorage) StoreMail(mailItem *mailitem.MailItem) (string, error) {
 	var err error
 	var transaction *sql.Tx
 	var statement *sql.Stmt

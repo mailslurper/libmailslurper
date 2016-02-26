@@ -17,6 +17,9 @@ func ConnectToStorage(storageType StorageType, connectionInfo *ConnectionInforma
 	log.Println("libmailslurper: INFO - Connecting to database")
 
 	switch storageType {
+	case STORAGE_SQLITE:
+		storageHandle = NewSQLiteStorage(connectionInfo)
+
 	case STORAGE_MSSQL:
 		storageHandle = NewMSSQLStorage(connectionInfo)
 	}
@@ -25,12 +28,9 @@ func ConnectToStorage(storageType StorageType, connectionInfo *ConnectionInforma
 		return storageHandle, err
 	}
 
-	/*
-		switch connectionInfo.Engine {
-		case golangdb.SQLITE:
-			CreateSqlliteDatabase()
-		}
-	*/
+	if err = storageHandle.Create(); err != nil {
+		return storageHandle, err
+	}
 
 	return storageHandle, nil
 }

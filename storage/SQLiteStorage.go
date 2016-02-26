@@ -238,51 +238,34 @@ func (storage *SQLiteStorage) GetMailCollection(offset, length int, mailSearch *
 	 * This query is MSSQL 2005 and higher compatible
 	 */
 	sqlQuery := `
-		WITH pagedMailItems AS (
-			SELECT
-				  mailitem.id
-				, mailitem.dateSent
-				, mailitem.fromAddress
-				, mailitem.toAddressList
-				, mailitem.subject
-				, mailitem.xmailer
-				, mailitem.body
-				, mailitem.contentType
-				, mailitem.boundary
-				, ROW_NUMBER() OVER (ORDER BY mailitem.dateSent DESC) AS rowNumber
-			FROM mailitem
-			WHERE 1=1
+		SELECT
+			  mailitem.id
+			, mailitem.dateSent
+			, mailitem.fromAddress
+			, mailitem.toAddressList
+			, mailitem.subject
+			, mailitem.xmailer
+			, mailitem.body
+			, mailitem.contentType AS mailContentType
+			, mailitem.boundary
+			, attachment.id AS attachmentID
+			, attachment.fileName
+			, attachment.contentType AS attachmentContentType
+		FROM mailitem
+			LEFT JOIN attachment ON attachment.mailItemID=mailitem.id
+
+		WHERE 1=1
 	`
 
 	sqlQuery, parameters = addSearchCriteria(sqlQuery, parameters, mailSearch)
 
 	sqlQuery = sqlQuery + `
-		)
-		SELECT
-			  pagedMailItems.id AS mailItemID
-			, pagedMailItems.dateSent
-			, pagedMailItems.fromAddress
-			, pagedMailItems.toAddressList
-			, pagedMailItems.subject
-			, pagedMailItems.xmailer
-			, pagedMailItems.body
-			, pagedMailItems.contentType AS mailContentType
-			, pagedMailItems.boundary
-			, attachment.id AS attachmentID
-			, attachment.fileName
-			, attachment.contentType AS attachmentContentType
-
-		FROM pagedMailItems
-			LEFT JOIN attachment ON attachment.mailItemID=pagedMailItems.id
-
-		WHERE
-			pagedMailItems.rowNumber BETWEEN ? AND ?
-
-		ORDER BY pagedMailItems.dateSent DESC
+		ORDER BY mailitem.dateSent DESC
+		LIMIT ? OFFSET ?
 	`
 
+	parameters = append(parameters, length)
 	parameters = append(parameters, offset)
-	parameters = append(parameters, offset+length)
 
 	log.Printf("SQL: %s", sqlQuery)
 	if rows, err = storage.db.Query(sqlQuery, parameters...); err != nil {

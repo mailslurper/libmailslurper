@@ -108,28 +108,29 @@ func addSearchCriteria(sqlQuery string, parameters []interface{}, mailSearch *se
 	if len(strings.TrimSpace(mailSearch.Message)) > 0 {
 		sqlQuery += `
 			AND (
-				mailitem.body LIKE '%?%'
-				OR mailitem.subject LIKE '%?%'
+				mailitem.body LIKE ?
+				OR mailitem.subject LIKE ?
 			)
 		`
 
-		parameters = append(parameters, mailSearch.Message)
+		parameters = append(parameters, "%"+mailSearch.Message+"%")
+		parameters = append(parameters, "%"+mailSearch.Message+"%")
 	}
 
 	if len(strings.TrimSpace(mailSearch.From)) > 0 {
 		sqlQuery += `
-			AND mailitem.subject LIKE '%?%'
+			AND mailitem.subject LIKE ?
 		`
 
-		parameters = append(parameters, mailSearch.From)
+		parameters = append(parameters, "%"+mailSearch.From+"%")
 	}
 
 	if len(strings.TrimSpace(mailSearch.To)) > 0 {
 		sqlQuery += `
-			AND mailitem.toAddressList LIKE '%?%'
+			AND mailitem.toAddressList LIKE ?
 		`
 
-		parameters = append(parameters, mailSearch.To)
+		parameters = append(parameters, "%"+mailSearch.To+"%")
 	}
 
 	if len(strings.TrimSpace(mailSearch.Start)) > 0 {

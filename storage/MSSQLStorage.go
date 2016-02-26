@@ -113,10 +113,11 @@ func (storage *MSSQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, 
 	var subject string
 	var xmailer string
 	var body string
-	var boundary string
+	var boundary sql.NullString
 	var attachmentID sql.NullString
-	var fileName string
-	var contentType string
+	var fileName sql.NullString
+	var mailContentType string
+	var attachmentContentType sql.NullString
 
 	sqlQuery := getMailAndAttachmentsQuery(" AND mailitem.id=? ")
 
@@ -127,7 +128,7 @@ func (storage *MSSQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, 
 	defer rows.Close()
 
 	for rows.Next() {
-		err = rows.Scan(&dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &boundary, &attachmentID, &fileName, &contentType)
+		err = rows.Scan(&dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &mailContentType, &boundary, &attachmentID, &fileName, &attachmentContentType)
 		if err != nil {
 			return result, fmt.Errorf("Error scanning mail item record: %s", err.Error())
 		}
@@ -144,8 +145,11 @@ func (storage *MSSQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, 
 				Subject:     storage.xssService.SanitizeString(subject),
 				XMailer:     storage.xssService.SanitizeString(xmailer),
 				Body:        storage.xssService.SanitizeString(body),
-				ContentType: contentType,
-				Boundary:    boundary,
+				ContentType: mailContentType,
+			}
+
+			if boundary.Valid {
+				result.Boundary = boundary.String
 			}
 		}
 
@@ -154,8 +158,8 @@ func (storage *MSSQLStorage) GetMailByID(mailItemID string) (mailitem.MailItem, 
 				Id:     attachmentID.String,
 				MailId: mailItemID,
 				Headers: &attachment.AttachmentHeader{
-					FileName:    storage.xssService.SanitizeString(fileName),
-					ContentType: contentType,
+					FileName:    storage.xssService.SanitizeString(fileName.String),
+					ContentType: attachmentContentType.String,
 				},
 			}
 
@@ -190,7 +194,7 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int, mailSearch *s
 	var xmailer string
 	var body string
 	var mailContentType string
-	var boundary string
+	var boundary sql.NullString
 	var attachmentID sql.NullString
 	var fileName sql.NullString
 	var attachmentContentType sql.NullString
@@ -245,6 +249,7 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int, mailSearch *s
 	parameters = append(parameters, offset)
 	parameters = append(parameters, offset+length)
 
+	log.Printf("SQL: %s", sqlQuery)
 	if rows, err = storage.db.Query(sqlQuery, parameters...); err != nil {
 		return result, fmt.Errorf("Error running query to get mail collection: %s", err.Error())
 	}
@@ -278,7 +283,10 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int, mailSearch *s
 				XMailer:     storage.xssService.SanitizeString(xmailer),
 				Body:        storage.xssService.SanitizeString(body),
 				ContentType: mailContentType,
-				Boundary:    boundary,
+			}
+
+			if boundary.Valid {
+				currentMailItem.Boundary = boundary.String
 			}
 
 			currentMailItemID = mailItemID

@@ -11,6 +11,7 @@ import (
 )
 
 var dateInputFormats = []string{
+	"Mon, 02 Jan 2006 15:04:05 -0700",
 	"Mon, 02 Jan 2006 15:04:05 -0700 MST",
 	"Mon, 02 Jan 2006 15:04:05 -0700 (MST)",
 	"Mon, 2 Jan 2006 15:04:05 -0700 (MST)",
@@ -18,7 +19,7 @@ var dateInputFormats = []string{
 }
 
 /*
-Takes a date/time string and attempts to parse it and return a newly formatted
+ParseDateTime takes a date/time string and attempts to parse it and return a newly formatted
 date/time that looks like YYYY-MM-DD HH:MM:SS
 */
 func ParseDateTime(dateString string) string {

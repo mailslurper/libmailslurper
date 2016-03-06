@@ -54,8 +54,10 @@ func (storage *SQLiteStorage) Create() error {
 
 	var err error
 
-	if err = os.Remove(storage.connectionInformation.Filename); err != nil {
-		return err
+	if _, err = os.Stat(storage.connectionInformation.Filename); err == nil {
+		if err = os.Remove(storage.connectionInformation.Filename); err != nil {
+			return err
+		}
 	}
 
 	sqlStatement := `

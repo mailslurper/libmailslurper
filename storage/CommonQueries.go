@@ -123,7 +123,7 @@ func addSearchCriteria(sqlQuery string, parameters []interface{}, mailSearch *se
 
 	if len(strings.TrimSpace(mailSearch.From)) > 0 {
 		sqlQuery += `
-			AND mailitem.subject LIKE ?
+			AND mailitem.fromAddress LIKE ?
 		`
 
 		parameters = append(parameters, "%"+mailSearch.From+"%")

@@ -260,9 +260,9 @@ func (storage *SQLiteStorage) GetMailCollection(offset, length int, mailSearch *
 	`
 
 	sqlQuery, parameters = addSearchCriteria(sqlQuery, parameters, mailSearch)
+	sqlQuery = addOrderBy(sqlQuery, "mailitem", mailSearch)
 
 	sqlQuery = sqlQuery + `
-		ORDER BY mailitem.dateSent DESC
 		LIMIT ? OFFSET ?
 	`
 

@@ -5,8 +5,10 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"github.com/mailslurper/libmailslurper/model/mailitem"
 	"github.com/mailslurper/libmailslurper/sanitization"
@@ -55,18 +57,23 @@ func NewServerPool(maxWorkers int) ServerPool {
 NextWorker retrieves the next available worker from
 the queue.
 */
-func (pool ServerPool) NextWorker(connection *net.TCPConn, receiver chan mailitem.MailItem) *SmtpWorker {
+func (pool ServerPool) NextWorker(connection *net.TCPConn, receiver chan mailitem.MailItem) (*SmtpWorker, error) {
 	/*
 	 * TODO: This blocks until a worker is available. Perhaps implement a timeout?
 	 */
-	worker := <-pool
-	worker.Prepare(
-		connection,
-		receiver,
-		smtpio.SmtpReader{Connection: connection},
-		smtpio.SmtpWriter{Connection: connection},
-	)
+	select {
+	case worker := <-pool:
+		worker.Prepare(
+			connection,
+			receiver,
+			smtpio.SmtpReader{Connection: connection},
+			smtpio.SmtpWriter{Connection: connection},
+		)
 
-	log.Println("libmailslurper: INFO - Worker", worker.WorkerId, "queued to handle connection from", connection.RemoteAddr().String())
-	return worker
+		log.Println("libmailslurper: INFO - Worker", worker.WorkerId, "queued to handle connection from", connection.RemoteAddr().String())
+		return worker, nil
+
+	case <-time.After(time.Second * 2):
+		return &SmtpWorker{}, fmt.Errorf("No worker available. Timeout has been exceeded")
+	}
 }

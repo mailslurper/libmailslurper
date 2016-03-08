@@ -54,6 +54,7 @@ func Dispatch(serverPool ServerPool, handle *net.TCPListener, receivers []receiv
 	 * the MailItem channel.
 	 */
 	mailItemChannel := make(chan mailitem.MailItem, 1000)
+	var worker *SmtpWorker
 
 	go func() {
 		log.Println("libmailslurper: INFO -", len(receivers), "receiver(s) listening")
@@ -77,6 +78,13 @@ func Dispatch(serverPool ServerPool, handle *net.TCPListener, receivers []receiv
 			log.Panicf("libmailslurper: ERROR - Error while accepting SMTP requests: %s", err)
 		}
 
-		serverPool.NextWorker(connection.(*net.TCPConn), mailItemChannel).Work()
+		if worker, err = serverPool.NextWorker(connection.(*net.TCPConn), mailItemChannel); err != nil {
+			connection.Close()
+
+			log.Printf("libmailslurper: ERROR - %s", err.Error())
+			continue
+		}
+
+		worker.Work()
 	}
 }

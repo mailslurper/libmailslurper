@@ -144,7 +144,7 @@ func GetMailCollection(writer http.ResponseWriter, request *http.Request) {
 		From:    request.URL.Query().Get("from"),
 		To:      request.URL.Query().Get("to"),
 
-		OrderByField:     request.URL.Query().Get("orderBy"),
+		OrderByField:     request.URL.Query().Get("orderby"),
 		OrderByDirection: request.URL.Query().Get("dir"),
 	}
 

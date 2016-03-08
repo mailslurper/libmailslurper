@@ -247,8 +247,9 @@ func (storage *MSSQLStorage) GetMailCollection(offset, length int, mailSearch *s
 		WHERE
 			pagedMailItems.rowNumber BETWEEN ? AND ?
 
-		ORDER BY pagedMailItems.dateSent DESC
 	`
+
+	sqlQuery = addOrderBy(sqlQuery, "pagedMailItems", mailSearch)
 
 	parameters = append(parameters, offset)
 	parameters = append(parameters, offset+length)

@@ -48,13 +48,13 @@ Function to send a response to a client connection. It returns true/false for su
 with any response.
 */
 func (this *SmtpWriter) SendResponse(response string) error {
-	log.Printf("Saying %s", response)
-	err1 := this.Connection.SetWriteDeadline(time.Now().Add(time.Second * 2))
-	if err1 != nil {
-		log.Printf("Error setting write deadline: %s", err1.Error())
+	var err error
+
+	if err = this.Connection.SetWriteDeadline(time.Now().Add(time.Second * 2)); err != nil {
+		log.Printf("Error setting write deadline: %s", err.Error())
 	}
-	_, err := this.Connection.Write([]byte(string(response + smtpconstants.SMTP_CRLF)))
-	log.Printf("tots wrote it")
+
+	_, err = this.Connection.Write([]byte(string(response + smtpconstants.SMTP_CRLF)))
 	return err
 }
 

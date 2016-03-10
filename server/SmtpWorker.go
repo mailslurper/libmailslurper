@@ -281,7 +281,6 @@ is received. This will start the process by responding to the client,
 start processing commands, and finally close the connection.
 */
 func (this *SmtpWorker) Work() {
-	log.Printf("Starting work")
 	go func() {
 		var streamInput string
 		var command smtpconstants.SmtpCommand

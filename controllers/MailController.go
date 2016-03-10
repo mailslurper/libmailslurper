@@ -143,6 +143,9 @@ func GetMailCollection(writer http.ResponseWriter, request *http.Request) {
 		End:     request.URL.Query().Get("end"),
 		From:    request.URL.Query().Get("from"),
 		To:      request.URL.Query().Get("to"),
+
+		OrderByField:     request.URL.Query().Get("orderby"),
+		OrderByDirection: request.URL.Query().Get("dir"),
 	}
 
 	if mailCollection, err = database.GetMailCollection(offset, length, mailSearch); err != nil {

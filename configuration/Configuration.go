@@ -23,19 +23,22 @@ configuration file with settings for how to bind
 servers and connect to databases.
 */
 type Configuration struct {
-	WWWAddress     string `json:"wwwAddress"`
-	WWWPort        int    `json:"wwwPort"`
-	ServiceAddress string `json:"serviceAddress"`
-	ServicePort    int    `json:"servicePort"`
-	SmtpAddress    string `json:"smtpAddress"`
-	SmtpPort       int    `json:"smtpPort"`
-	DBEngine       string `json:"dbEngine"`
-	DBHost         string `json:"dbHost"`
-	DBPort         int    `json:"dbPort"`
-	DBDatabase     string `json:"dbDatabase"`
-	DBUserName     string `json:"dbUserName"`
-	DBPassword     string `json:"dbPassword"`
-	MaxWorkers     int    `json:"maxWorkers"`
+	WWWAddress       string `json:"wwwAddress"`
+	WWWPort          int    `json:"wwwPort"`
+	ServiceAddress   string `json:"serviceAddress"`
+	ServicePort      int    `json:"servicePort"`
+	SmtpAddress      string `json:"smtpAddress"`
+	SmtpPort         int    `json:"smtpPort"`
+	DBEngine         string `json:"dbEngine"`
+	DBHost           string `json:"dbHost"`
+	DBPort           int    `json:"dbPort"`
+	DBDatabase       string `json:"dbDatabase"`
+	DBUserName       string `json:"dbUserName"`
+	DBPassword       string `json:"dbPassword"`
+	MaxWorkers       int    `json:"maxWorkers"`
+	AutoStartBrowser bool   `json:"autoStartBrowser"`
+	CertFile         string `json:"certFile"`
+	KeyFile          string `json:"keyFile"`
 
 	StorageType storage.StorageType
 }

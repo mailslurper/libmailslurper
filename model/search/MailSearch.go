@@ -9,4 +9,7 @@ type MailSearch struct {
 	End     string
 	From    string
 	To      string
+
+	OrderByField     string
+	OrderByDirection string
 }

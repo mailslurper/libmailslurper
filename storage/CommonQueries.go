@@ -105,6 +105,29 @@ func getInsertAttachmentQuery() string {
 	return sqlQuery
 }
 
+func addOrderBy(sqlQuery string, tablePrefix string, mailSearch *search.MailSearch) string {
+	switch mailSearch.OrderByField {
+	case "subject":
+		sqlQuery += fmt.Sprintf(" ORDER BY %s.subject ", tablePrefix)
+
+	case "from":
+		sqlQuery += fmt.Sprintf(" ORDER BY %s.fromAddress ", tablePrefix)
+
+	default:
+		sqlQuery += fmt.Sprintf(" ORDER BY %s.dateSent ", tablePrefix)
+	}
+
+	switch mailSearch.OrderByDirection {
+	case "asc":
+		sqlQuery += " ASC "
+
+	default:
+		sqlQuery += " DESC "
+	}
+
+	return sqlQuery
+}
+
 func addSearchCriteria(sqlQuery string, parameters []interface{}, mailSearch *search.MailSearch) (string, []interface{}) {
 	var date time.Time
 	var err error
@@ -123,7 +146,7 @@ func addSearchCriteria(sqlQuery string, parameters []interface{}, mailSearch *se
 
 	if len(strings.TrimSpace(mailSearch.From)) > 0 {
 		sqlQuery += `
-			AND mailitem.subject LIKE ?
+			AND mailitem.fromAddress LIKE ?
 		`
 
 		parameters = append(parameters, "%"+mailSearch.From+"%")

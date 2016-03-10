@@ -57,7 +57,7 @@ func NewServerPool(maxWorkers int) ServerPool {
 NextWorker retrieves the next available worker from
 the queue.
 */
-func (pool ServerPool) NextWorker(connection *net.TCPConn, receiver chan mailitem.MailItem) (*SmtpWorker, error) {
+func (pool ServerPool) NextWorker(connection net.Conn, receiver chan mailitem.MailItem) (*SmtpWorker, error) {
 	/*
 	 * TODO: This blocks until a worker is available. Perhaps implement a timeout?
 	 */

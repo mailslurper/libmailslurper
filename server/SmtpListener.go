@@ -5,33 +5,47 @@
 package server
 
 import (
+	"crypto/tls"
 	"log"
 	"net"
 
+	"github.com/mailslurper/libmailslurper/configuration"
 	"github.com/mailslurper/libmailslurper/model/mailitem"
 	"github.com/mailslurper/libmailslurper/receiver"
 )
 
 /*
-Establishes a listening connection to a socket on an address. This will
+SetupSMTPServerListener establishes a listening connection to a socket on an address. This will
 return a net.Listener handle.
 */
-func SetupSmtpServerListener(address string) (*net.TCPListener, error) {
-	result := &net.TCPListener{}
+func SetupSMTPServerListener(config *configuration.Configuration) (net.Listener, error) {
+	var tcpAddress *net.TCPAddr
+	var certificate tls.Certificate
+	var err error
 
-	tcpAddress, err := net.ResolveTCPAddr("tcp", address)
-	if err != nil {
-		return result, err
+	if config.CertFile != "" && config.KeyFile != "" {
+		if certificate, err = tls.LoadX509KeyPair(config.CertFile, config.KeyFile); err != nil {
+			return &net.TCPListener{}, err
+		}
+
+		tlsConfig := &tls.Config{Certificates: []tls.Certificate{certificate}}
+
+		log.Println("libmailslurper: INFO - SMTP listener running on SSL - ", config.GetFullSmtpBindingAddress())
+		return tls.Listen("tcp", config.GetFullSmtpBindingAddress(), tlsConfig)
 	}
 
-	log.Println("libmailslurper: INFO - SMTP listener running on", address)
+	if tcpAddress, err = net.ResolveTCPAddr("tcp", config.GetFullSmtpBindingAddress()); err != nil {
+		return &net.TCPListener{}, err
+	}
+
+	log.Println("libmailslurper: INFO - SMTP listener running on", config.GetFullSmtpBindingAddress())
 	return net.ListenTCP("tcp", tcpAddress)
 }
 
 /*
-Closes a socket connection in an Server object. Most likely used in a defer call.
+CloseSMTPServerListener closes a socket connection in an Server object. Most likely used in a defer call.
 */
-func CloseSmtpServerListener(handle *net.TCPListener) {
+func CloseSMTPServerListener(handle net.Listener) {
 	handle.Close()
 }
 
@@ -48,7 +62,7 @@ and parser and the parser process is started. If the parsing is successful
 the MailItemStruct is added to a channel. An receivers passed in will be
 listening on that channel and may do with the mail item as they wish.
 */
-func Dispatch(serverPool ServerPool, handle *net.TCPListener, receivers []receiver.IMailItemReceiver) {
+func Dispatch(serverPool ServerPool, handle net.Listener, receivers []receiver.IMailItemReceiver) {
 	/*
 	 * Setup our receivers. These guys are basically subscribers to
 	 * the MailItem channel.
@@ -78,7 +92,7 @@ func Dispatch(serverPool ServerPool, handle *net.TCPListener, receivers []receiv
 			log.Panicf("libmailslurper: ERROR - Error while accepting SMTP requests: %s", err)
 		}
 
-		if worker, err = serverPool.NextWorker(connection.(*net.TCPConn), mailItemChannel); err != nil {
+		if worker, err = serverPool.NextWorker(connection, mailItemChannel); err != nil {
 			connection.Close()
 
 			log.Printf("libmailslurper: ERROR - %s", err.Error())

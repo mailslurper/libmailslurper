@@ -7,12 +7,13 @@ package smtpio
 import (
 	"log"
 	"net"
+	"time"
 
 	"github.com/mailslurper/libmailslurper/smtpconstants"
 )
 
 type SmtpWriter struct {
-	Connection *net.TCPConn
+	Connection net.Conn
 }
 
 /*
@@ -47,7 +48,13 @@ Function to send a response to a client connection. It returns true/false for su
 with any response.
 */
 func (this *SmtpWriter) SendResponse(response string) error {
-	_, err := this.Connection.Write([]byte(string(response + smtpconstants.SMTP_CRLF)))
+	var err error
+
+	if err = this.Connection.SetWriteDeadline(time.Now().Add(time.Second * 2)); err != nil {
+		log.Printf("Error setting write deadline: %s", err.Error())
+	}
+
+	_, err = this.Connection.Write([]byte(string(response + smtpconstants.SMTP_CRLF)))
 	return err
 }
 

@@ -14,9 +14,12 @@ ServiceTierConfiguration allows a caller to configure how to start
 and run the service tier HTTP server
 */
 type ServiceTierConfiguration struct {
-	Address  string
-	Context  *middleware.AppContext
-	Database storage.IStorage
-	Log      *logging.Logger
-	Port     int
+	Address          string
+	Context          *middleware.AppContext
+	Database         storage.IStorage
+	Log              *logging.Logger
+	Port             int
+	CertFile         string
+	KeyFile          string
+	CertIsSelfSigned bool
 }

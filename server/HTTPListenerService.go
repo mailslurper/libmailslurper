@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/adampresley/logging"
 	"github.com/mailslurper/libmailslurper/middleware"
 
 	"github.com/gorilla/mux"
@@ -98,14 +99,15 @@ func (service *HTTPListenerService) StartHTTPListener() error {
 		Handler: alice.New().Then(service.Router),
 	}
 
-	service.Context.Log.Info("HTTP listener started on", service.Address, ":", service.Port)
-	return startListener(listener, service.Context.CertFile, service.Context.KeyFile)
+	return startListener(listener, service.Context.CertFile, service.Context.KeyFile, service.Context.Log, service.Address, service.Port)
 }
 
-func startListener(listener *http.Server, certFile, keyFile string) error {
-	if certFile == "" && keyFile == "" {
-		return listener.ListenAndServe()
-	} else {
+func startListener(listener *http.Server, certFile, keyFile string, logger *logging.Logger, address string, port int) error {
+	if certFile != "" && keyFile != "" {
+		logger.Infof("Service Tier HTTPS listener started on %s:%d", address, port)
 		return listener.ListenAndServeTLS(certFile, keyFile)
 	}
+
+	logger.Infof("Service Tier HTTP listener started on %s:%d", address, port)
+	return listener.ListenAndServe()
 }

@@ -39,7 +39,6 @@ type Configuration struct {
 	AutoStartBrowser bool   `json:"autoStartBrowser"`
 	CertFile         string `json:"certFile"`
 	KeyFile          string `json:"keyFile"`
-	CertIsSelfSigned bool   `json:"certIsSelfSigned"`
 
 	StorageType storage.StorageType
 }

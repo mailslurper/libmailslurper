@@ -20,7 +20,7 @@ import (
 )
 
 type SmtpWorker struct {
-	Connection             *net.TCPConn
+	Connection             net.Conn
 	EmailValidationService sanitization.EmailValidationProvider
 	Mail                   mailitem.MailItem
 	Reader                 smtpio.SmtpReader
@@ -145,7 +145,7 @@ Prepare tells a worker about the TCP connection they will work
 with, the IO handlers, and sets their state.
 */
 func (this *SmtpWorker) Prepare(
-	connection *net.TCPConn,
+	connection net.Conn,
 	receiver chan mailitem.MailItem,
 	reader smtpio.SmtpReader,
 	writer smtpio.SmtpWriter,
@@ -281,6 +281,7 @@ is received. This will start the process by responding to the client,
 start processing commands, and finally close the connection.
 */
 func (this *SmtpWorker) Work() {
+	log.Printf("Starting work")
 	go func() {
 		var streamInput string
 		var command smtpconstants.SmtpCommand

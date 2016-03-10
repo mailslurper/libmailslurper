@@ -13,8 +13,8 @@ import (
 	"github.com/mailslurper/libmailslurper/smtpconstants"
 )
 
-type SmtpReader struct{
-	Connection *net.TCPConn
+type SmtpReader struct {
+	Connection net.Conn
 }
 
 /*

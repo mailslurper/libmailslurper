@@ -37,6 +37,9 @@ type Configuration struct {
 	DBPassword       string `json:"dbPassword"`
 	MaxWorkers       int    `json:"maxWorkers"`
 	AutoStartBrowser bool   `json:"autoStartBrowser"`
+	CertFile         string `json:"certFile"`
+	KeyFile          string `json:"keyFile"`
+	CertIsSelfSigned bool   `json:"certIsSelfSigned"`
 
 	StorageType storage.StorageType
 }

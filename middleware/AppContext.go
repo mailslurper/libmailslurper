@@ -18,8 +18,11 @@ should attach functions to this structure to pass critical data to request
 handlers.
 */
 type AppContext struct {
-	Log      *logging.Logger
-	Database storage.IStorage
+	CertFile         string
+	KeyFile          string
+	CertIsSelfSigned bool
+	Log              *logging.Logger
+	Database         storage.IStorage
 }
 
 /*

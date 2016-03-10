@@ -99,9 +99,13 @@ func (service *HTTPListenerService) StartHTTPListener() error {
 	}
 
 	service.Context.Log.Info("HTTP listener started on", service.Address, ":", service.Port)
-	return startListener(listener)
+	return startListener(listener, service.Context.CertFile, service.Context.KeyFile)
 }
 
-func startListener(listener *http.Server) error {
-	return listener.ListenAndServe()
+func startListener(listener *http.Server, certFile, keyFile string) error {
+	if certFile == "" && keyFile == "" {
+		return listener.ListenAndServe()
+	} else {
+		return listener.ListenAndServeTLS(certFile, keyFile)
+	}
 }

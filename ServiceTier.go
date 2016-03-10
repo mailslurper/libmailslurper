@@ -14,8 +14,11 @@ setup logging, an app context, and the HTTP listener
 func StartServiceTier(configuration *configuration.ServiceTierConfiguration) error {
 	log := logging.NewLoggerWithMinimumLevel("MailSlurper", logging.StringToLogType("info"))
 	appContext := &middleware.AppContext{
-		Log:      log,
-		Database: configuration.Database,
+		Log:              log,
+		Database:         configuration.Database,
+		CertIsSelfSigned: configuration.CertIsSelfSigned,
+		CertFile:         configuration.CertFile,
+		KeyFile:          configuration.KeyFile,
 	}
 
 	httpListener := server.NewHTTPListenerService(configuration.Address, configuration.Port, appContext)

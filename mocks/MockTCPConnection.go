@@ -2,16 +2,11 @@ package mocks
 
 import (
 	"errors"
-	"io"
 	"net"
 	"time"
 )
 
 type MockTCPConn struct {
-	Reader io.Reader
-	Writer io.Writer
-	Closer io.Closer
-
 	ReadShouldError             bool
 	WriteShouldError            bool
 	CloseShouldError            bool

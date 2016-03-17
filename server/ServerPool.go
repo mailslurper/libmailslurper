@@ -5,11 +5,11 @@
 package server
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"time"
 
+	"github.com/mailslurper/libmailslurper/customerror"
 	"github.com/mailslurper/libmailslurper/model/mailitem"
 	"github.com/mailslurper/libmailslurper/sanitization"
 	"github.com/mailslurper/libmailslurper/smtpio"
@@ -74,6 +74,6 @@ func (pool ServerPool) NextWorker(connection net.Conn, receiver chan mailitem.Ma
 		return worker, nil
 
 	case <-time.After(time.Second * 2):
-		return &SmtpWorker{}, fmt.Errorf("No worker available. Timeout has been exceeded")
+		return &SmtpWorker{}, customerror.NoWorkerAvailable()
 	}
 }

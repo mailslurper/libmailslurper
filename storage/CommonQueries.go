@@ -172,11 +172,13 @@ func addSearchCriteria(sqlQuery string, parameters []interface{}, mailSearch *se
 
 	if len(strings.TrimSpace(mailSearch.End)) > 0 {
 		if date, err = time.Parse("2006-01-02", mailSearch.End); err == nil {
+			datePlusOne := date.Add(time.Hour * 24)
+
 			sqlQuery += `
-				AND mailitem.dateSent <= ?
+				AND mailitem.dateSent < ?
 			`
 
-			parameters = append(parameters, date)
+			parameters = append(parameters, datePlusOne)
 		}
 	}
 

@@ -13,6 +13,7 @@ func setupRoutes(httpListener *server.HTTPListenerService, appContext *middlewar
 	httpListener.
 		AddRoute("/version", controllers.GetVersion, "GET", "OPTIONS").
 		AddRoute("/mail/{mailID}", controllers.GetMail, "GET", "OPTIONS").
+		AddRoute("/mail/{mailID}/message", controllers.GetMailMessage, "GET", "OPTIONS").
 		AddRoute("/mail/{mailID}/attachment/{attachmentID}", controllers.DownloadAttachment, "GET", "OPTIONS").
 		AddRoute("/mail", controllers.GetMailCollection, "GET", "OPTIONS").
 		AddRoute("/mail", controllers.DeleteMail, "DELETE", "OPTIONS").

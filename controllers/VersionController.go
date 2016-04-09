@@ -5,15 +5,27 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/adampresley/GoHttpService"
+	"github.com/adampresley/logging"
+	"github.com/gorilla/context"
+	"github.com/mailslurper/libmailslurper/server"
 )
 
 /*
 GetVersion returns the current MailSlurper version
 */
 func GetVersion(writer http.ResponseWriter, request *http.Request) {
-	GoHttpService.Success(writer, fmt.Sprintf("MailSlurperService server version 1.8"))
+	var err error
+	var result *server.Version
+	log := context.Get(request, "log").(*logging.Logger)
+
+	if result, err = server.GetServerVersionFromMaster(); err != nil {
+		log.Errorf("Error getting version file from Github: %s", err.Error())
+		GoHttpService.Error(writer, "There was an error reading the version file from GitHub")
+		return
+	}
+
+	GoHttpService.WriteJson(writer, result, 200)
 }

@@ -205,3 +205,41 @@ func GetMailCount(writer http.ResponseWriter, request *http.Request) {
 
 	GoHttpService.WriteJson(writer, result, 200)
 }
+
+/*
+GetMailMessage returns the message contents of a single mail item
+
+	GET: /mail/{id}/message
+*/
+func GetMailMessage(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+
+	log := context.Get(request, "log").(*logging.Logger)
+	database := context.Get(request, "database").(storage.IStorage)
+
+	var mailID string
+	var mailItem mailitem.MailItem
+	var err error
+	var ok bool
+
+	/*
+	 * Validate incoming arguments
+	 */
+	if mailID, ok = vars["mailID"]; !ok {
+		log.Error("Invalid mail ID passed to GetMailMessage")
+		GoHttpService.BadRequest(writer, "A valid mail ID is required")
+		return
+	}
+
+	/*
+	 * Retrieve the mail item
+	 */
+	if mailItem, err = database.GetMailByID(mailID); err != nil {
+		log.Errorf("Problem getting mail item in GetMailMessage - %s", err.Error())
+		GoHttpService.Error(writer, "Problem getting mail item")
+		return
+	}
+
+	log.Infof("Mail item %s retrieved", mailID)
+	GoHttpService.WriteHTML(writer, mailItem.Body, 200)
+}

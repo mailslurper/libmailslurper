@@ -45,8 +45,8 @@ func SetupSMTPServerListener(config *configuration.Configuration) (net.Listener,
 /*
 CloseSMTPServerListener closes a socket connection in an Server object. Most likely used in a defer call.
 */
-func CloseSMTPServerListener(handle net.Listener) {
-	handle.Close()
+func CloseSMTPServerListener(handle net.Listener) error {
+	return handle.Close()
 }
 
 /*

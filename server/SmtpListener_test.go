@@ -86,6 +86,20 @@ func TestSmtpListener(t *testing.T) {
 			_, err = SetupSMTPServerListener(config)
 			So(err.Error(), ShouldContainSubstring, "failed to find any PEM")
 		})
+	})
 
+	Convey("Closing a listener works", t, func() {
+		var err error
+
+		config := &configuration.Configuration{
+			SmtpAddress: "127.0.0.1",
+			SmtpPort:    0,
+		}
+
+		handle, err := SetupSMTPServerListener(config)
+		So(err, ShouldBeNil)
+
+		err = CloseSMTPServerListener(handle)
+		So(err, ShouldBeNil)
 	})
 }

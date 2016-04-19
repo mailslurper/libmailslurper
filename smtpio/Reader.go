@@ -54,9 +54,18 @@ until the terminator is sent.
 */
 func (this *SmtpReader) ReadDataBlock() string {
 	var dataBuffer bytes.Buffer
+	timeLimit := time.Now().Add(time.Second * smtpconstants.COMMAND_TIMEOUT_SECONDS)
 
 	for {
 		dataResponse := this.Read()
+
+		if len(dataResponse) > 0 {
+			timeLimit = time.Now().Add(time.Second * smtpconstants.COMMAND_TIMEOUT_SECONDS)
+		}
+
+		if time.Now().After(timeLimit) {
+			break
+		}
 
 		terminatorPos := strings.Index(dataResponse, smtpconstants.SMTP_DATA_TERMINATOR)
 		if terminatorPos <= -1 {

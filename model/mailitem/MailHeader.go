@@ -5,6 +5,7 @@
 package mailitem
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -45,7 +46,7 @@ Then it can look like this:
 
 Content-Type: multipart/mixed; boundary="==abcsdfdfd=="\r\n
 */
-func (this *MailHeader) Parse(contents string) {
+func (this *MailHeader) Parse(contents string) error {
 	var key string
 
 	this.XMailer = "MailSlurper!"
@@ -57,7 +58,7 @@ func (this *MailHeader) Parse(contents string) {
 	 */
 	headerBodySplit := strings.Split(contents, "\r\n\r\n")
 	if len(headerBodySplit) < 2 {
-		panic("Expected DATA block to contain a header section and a body section")
+		return fmt.Errorf("Expected DATA block to contain a header section and a body section")
 	}
 
 	contents = headerBodySplit[0]
@@ -114,4 +115,6 @@ func (this *MailHeader) Parse(contents string) {
 			log.Println("libmailslurper: INFO - Mail Subject: ", this.Subject)
 		}
 	}
+
+	return nil
 }

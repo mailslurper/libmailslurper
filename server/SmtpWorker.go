@@ -180,6 +180,8 @@ This function will return the following items.
 	3. error structure
 */
 func (this *SmtpWorker) Process_DATA(streamInput string) (mailitem.MailHeader, mailitem.MailBody, error) {
+	var err error
+
 	header := mailitem.MailHeader{}
 	body := mailitem.MailBody{}
 
@@ -194,12 +196,18 @@ func (this *SmtpWorker) Process_DATA(streamInput string) (mailitem.MailHeader, m
 	/*
 	 * Parse the header content
 	 */
-	header.Parse(entireMailContents)
+	if err = header.Parse(entireMailContents); err != nil {
+		this.Writer.SendResponse(smtpconstants.SMTP_ERROR_TRANSACTION_FAILED)
+		return header, body, err
+	}
 
 	/*
 	 * Parse the body
 	 */
-	body.Parse(entireMailContents, header.Boundary)
+	if err = body.Parse(entireMailContents, header.Boundary); err != nil {
+		this.Writer.SendResponse(smtpconstants.SMTP_ERROR_TRANSACTION_FAILED)
+		return header, body, err
+	}
 
 	this.Writer.SendOkResponse()
 	return header, body, nil

@@ -32,14 +32,14 @@ a text message. A more complex example would be a multipart message
 with mixed text and HTML. It will also parse any attachments and
 retrieve their contents into an attachments array.
 */
-func (this *MailBody) Parse(contents string, boundary string) {
+func (this *MailBody) Parse(contents string, boundary string) error {
 	/*
 	 * Split the DATA content by CRLF CRLF. The first item will be the data
 	 * headers. Everything past that is body/message.
 	 */
 	headerBodySplit := strings.Split(contents, "\r\n\r\n")
 	if len(headerBodySplit) < 2 {
-		panic("Expected DATA block to contain a header section and a body section")
+		return fmt.Errorf("Expected DATA block to contain a header section and a body section")
 	}
 
 	contents = strings.Join(headerBodySplit[1:], "\r\n\r\n")
@@ -84,4 +84,6 @@ func (this *MailBody) Parse(contents string, boundary string) {
 			}
 		}
 	}
+
+	return nil
 }

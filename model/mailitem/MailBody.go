@@ -6,6 +6,7 @@ package mailitem
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/mailslurper/libmailslurper/model/attachment"
@@ -33,6 +34,8 @@ with mixed text and HTML. It will also parse any attachments and
 retrieve their contents into an attachments array.
 */
 func (this *MailBody) Parse(contents string, boundary string) error {
+	log.Println("Full body == ", contents)
+
 	/*
 	 * Split the DATA content by CRLF CRLF. The first item will be the data
 	 * headers. Everything past that is body/message.

@@ -40,20 +40,22 @@ Header-Name: Some value here\r\n
 func (this *AttachmentHeader) Parse(contents string) {
 	var key string
 
-	headerBodySplit := strings.Split(contents, "\r\n\r\n")
-	if len(headerBodySplit) < 2 {
-		log.Println("libmailslurper: ERROR - Expected attachment to contain a header section and a body section")
-		return
-	}
-
-	contents = headerBodySplit[0]
-
-	this.Body = strings.Join(headerBodySplit[1:], "\r\n\r\n")
 	this.FileName = ""
 	this.ContentType = ""
 	this.ContentDisposition = ""
 	this.ContentTransferEncoding = ""
 	this.MIMEVersion = ""
+	this.Body = ""
+
+	headerBodySplit := strings.Split(contents, "\r\n\r\n")
+
+	if len(headerBodySplit) < 2 {
+		log.Println("libmailslurper: WARNING - Attachment has no body content")
+	} else {
+		this.Body = strings.Join(headerBodySplit[1:], "\r\n\r\n")
+	}
+
+	contents = headerBodySplit[0]
 
 	/*
 	 * Unfold and split the header into lines. Loop over each line

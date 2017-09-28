@@ -7,7 +7,7 @@ package mailitem
 import (
 	"fmt"
 	"strings"
-
+	"encoding/base64"
 	"github.com/mailslurper/libmailslurper/model/attachment"
 )
 
@@ -32,7 +32,7 @@ a text message. A more complex example would be a multipart message
 with mixed text and HTML. It will also parse any attachments and
 retrieve their contents into an attachments array.
 */
-func (this *MailBody) Parse(contents string, boundary string) {
+func (this *MailBody) Parse(contents string, contentType string, boundary string, transferEncoding string) {
 	/*
 	 * Split the DATA content by CRLF CRLF. The first item will be the data
 	 * headers. Everything past that is body/message.
@@ -50,7 +50,15 @@ func (this *MailBody) Parse(contents string, boundary string) {
 	 * plain text type of mail you can get.
 	 */
 	if len(boundary) <= 0 {
-		this.TextBody = contents
+		if transferEncoding == "base64" {
+			decoded, _ := base64.StdEncoding.DecodeString(contents)
+			contents = (string(decoded))
+		}
+		if contentType == "text/html" {
+			this.HTMLBody = contents
+		} else {
+			this.TextBody = contents
+		}
 	} else {
 		bodyParts := strings.Split(strings.TrimSpace(contents), fmt.Sprintf("--%s", strings.TrimSpace(boundary)))
 		var index int

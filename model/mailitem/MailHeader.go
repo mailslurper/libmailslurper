@@ -13,12 +13,13 @@ import (
 )
 
 type MailHeader struct {
-	ContentType string
-	Boundary    string
-	MIMEVersion string
-	Subject     string
-	Date        string
-	XMailer     string
+	ContentType             string
+	ContentTransferEncoding string
+	Boundary                string
+	MIMEVersion             string
+	Subject                 string
+	Date                    string
+	XMailer                 string
 }
 
 func NewMailHeader(contentType, boundary, mimeVersion, subject, date, xMailer string) *MailHeader {
@@ -50,6 +51,7 @@ func (this *MailHeader) Parse(contents string) {
 
 	this.XMailer = "MailSlurper!"
 	this.Boundary = ""
+	this.ContentTransferEncoding = ""
 
 	/*
 	 * Split the DATA content by CRLF CRLF. The first item will be the data
@@ -96,7 +98,9 @@ func (this *MailHeader) Parse(contents string) {
 					log.Println("libmailslurper: INFO - Mail Boundary: ", this.Boundary)
 				}
 			}
-
+		case "content-transfer-encoding":
+			this.ContentTransferEncoding = strings.TrimSpace(strings.Join(splitItem[1:], ":"))
+			log.Println("libmailslurper: INFO - Content Transfer Encoding: ", this.ContentTransferEncoding)
 		case "date":
 			this.Date = datetime.ParseDateTime(strings.Join(splitItem[1:], ":"))
 			log.Println("libmailslurper: INFO - Mail Date: ", this.Date)

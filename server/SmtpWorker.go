@@ -199,7 +199,7 @@ func (this *SmtpWorker) Process_DATA(streamInput string) (mailitem.MailHeader, m
 	/*
 	 * Parse the body
 	 */
-	body.Parse(entireMailContents, header.Boundary)
+	body.Parse(entireMailContents, header.ContentType, header.Boundary, header.ContentTransferEncoding)
 
 	this.Writer.SendOkResponse()
 	return header, body, nil
